@@ -1,0 +1,6 @@
+{
+  "name": "JUANET SaaS Architecture Hub",
+  "description": "Interactive architectural specifications and system design diagrams for JUANET, a freelance services marketplace, including database schemas, role permissions, API endpoints, and a senior architect AI co-pilot.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
