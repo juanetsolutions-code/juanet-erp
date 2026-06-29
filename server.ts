@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
@@ -372,6 +373,93 @@ app.post("/api/copilot", async (req, res) => {
   } catch (error: any) {
     console.error("Gemini Co-pilot error handler exception:", error);
     res.status(500).json({ error: error.message || "Internal server error" });
+  }
+});
+
+// Documents / Specification files API
+app.get("/api/docs", (req, res) => {
+  try {
+    const docsDir = path.join(process.cwd(), "docs", "database");
+    const masterSpecPath = path.join(process.cwd(), "JUANET_Master_Specification.md");
+    
+    const filesList: { name: string; path: string; category: string }[] = [];
+    
+    if (fs.existsSync(masterSpecPath)) {
+      filesList.push({
+        name: "JUANET Master Specification",
+        path: "JUANET_Master_Specification.md",
+        category: "00 Master Specs"
+      });
+    }
+    
+    // Recursive directory reader
+    function scanDirRecursive(currentPath: string, relativeSubPath = "") {
+      if (!fs.existsSync(currentPath)) return;
+      const entries = fs.readdirSync(currentPath, { withFileTypes: true });
+      
+      // Sort alphabetically
+      entries.sort((a, b) => a.name.localeCompare(b.name));
+      
+      for (const entry of entries) {
+        const fullEntryPath = path.join(currentPath, entry.name);
+        const relativeEntryPath = relativeSubPath ? `${relativeSubPath}/${entry.name}` : entry.name;
+        
+        if (entry.isDirectory()) {
+          scanDirRecursive(fullEntryPath, relativeEntryPath);
+        } else if (entry.isFile() && entry.name.endsWith(".md")) {
+          // Determine Category based on relative sub path
+          let category = "01 General Database & Ledger Architecture";
+          if (relativeSubPath) {
+            // Replace underscores with spaces and capitalize logically
+            const formattedSub = relativeSubPath
+              .split("/")
+              .map(part => {
+                return part.replace(/_/g, " ");
+              })
+              .join(" / ");
+            category = formattedSub;
+          }
+          
+          let cleanName = entry.name.replace(/\.md$/, "").replace(/_/g, " ");
+          
+          filesList.push({
+            name: cleanName,
+            path: `docs/database/${relativeEntryPath}`,
+            category: category
+          });
+        }
+      }
+    }
+    
+    if (fs.existsSync(docsDir)) {
+      scanDirRecursive(docsDir);
+    }
+    
+    res.json({ files: filesList });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/docs/content", (req, res) => {
+  try {
+    const relativePath = req.query.path as string;
+    if (!relativePath) {
+      return res.status(400).json({ error: "Path parameter is required" });
+    }
+    
+    // Prevent directory traversal attacks
+    const sanitizedPath = path.normalize(relativePath).replace(/^(\.\.(\/|\\))+/, "");
+    const fullPath = path.join(process.cwd(), sanitizedPath);
+    
+    if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+    
+    const content = fs.readFileSync(fullPath, "utf-8");
+    res.json({ content });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 

@@ -95,6 +95,38 @@ export default function App() {
   const [comments, setComments] = useState<any[]>([
     { id: "C-1", postId: "post-1", author: "Caleb Kirui", text: "MPESA Daraja's asynchronous callback model is so much more resilient than simple polling. Great writeup!", date: "2 hrs ago" }
   ]);
+  const [blogPosts, setBlogPosts] = useState<any[]>([
+    {
+      id: "post-1",
+      title: "Building Resilient Financial Audits with MPESA Daraja API & Postgres Ledger",
+      slug: "mpesa-daraja-api-audit",
+      excerpt: "Explore deep integration strategies for Safaricom Paybill callbacks, validating request structures, and maintaining transaction isolation.",
+      category: "Cloud Engineering",
+      author: "Juan",
+      date: "June 25, 2026",
+      content: `When implementing asynchronous transaction checkouts (Lipa Na M-PESA online), your API router must receive callbacks at \`/api/payments/mpesa-callback\` which Safaricom triggers as POST requests. The primary danger of transactions is double-spending or fake signature injections.
+
+By enforcing composite key constraints (\`CheckoutRequestID\`) inside the payments ledger table and verifying incoming payload checksums, the platform completely immunizes our accounting columns from external manipulations.`,
+      status: "published",
+      metaDescription: "Learn how to build secure audits with Safaricom Daraja MPESA API callback routes and PostgreSQL databases.",
+      targetKeyword: "MPESA Daraja API"
+    },
+    {
+      id: "post-2",
+      title: "Optimizing PostgreSQL Multi-Tenant Database Architecture",
+      slug: "optimizing-postgres-multi-tenant-db",
+      excerpt: "Master tenant partitioning, Row-Level Security policies, and performance tuning for high-throughput SaaS applications.",
+      category: "Database Architecture",
+      author: "Mary Kamau",
+      date: "June 28, 2026",
+      content: `Database isolation is the foundation of any secure SaaS multi-tenant system. In this article, we dive into comparing physical schema separation with single-database Row-Level Security (RLS) configurations.
+
+We show how the application of clean RLS policies tied to JWT auth claims simplifies development and guarantees robust tenant-level isolation without database configuration overhead.`,
+      status: "published",
+      metaDescription: "Step-by-step guide to tenant partitioning, RLS, and tuning in PostgreSQL databases for SaaS.",
+      targetKeyword: "PostgreSQL Multi-Tenant"
+    }
+  ]);
   const [projectFiles, setProjectFiles] = useState<any[]>([
     { id: "F-1", name: "system_architecture_spec.pdf", size: "2.4 MB", type: "application/pdf", date: "June 24, 2026" },
     { id: "F-2", name: "database_schema_v2.sql", size: "450 KB", type: "application/sql", date: "June 25, 2026" }
@@ -158,6 +190,7 @@ export default function App() {
             <SidebarButton active={activeTab === "blog"} icon={<BookOpen size={16} />} label="SEO Blog CMS" onClick={() => setActiveTab("blog")} />
             <SidebarButton active={activeTab === "deployment"} icon={<Settings size={16} />} label="Admin Integrations" onClick={() => setActiveTab("deployment")} />
             <SidebarButton active={activeTab === "copilot"} icon={<Bot size={16} />} label="SaaS Architect Co-Pilot" onClick={() => setActiveTab("copilot")} />
+            <SidebarButton active={activeTab === "specs"} icon={<FileText size={16} />} label="SaaS Specs Explorer" onClick={() => setActiveTab("specs")} />
           </nav>
 
           <div className="pt-6 border-t border-slate-800/60 mt-6 text-xs text-slate-500 px-3">
@@ -223,10 +256,16 @@ export default function App() {
                 />
               )}
               {activeTab === "blog" && (
-                <BlogTab comments={comments} setComments={setComments} />
+                <BlogTab 
+                  comments={comments} 
+                  setComments={setComments} 
+                  blogPosts={blogPosts}
+                  setBlogPosts={setBlogPosts}
+                />
               )}
               {activeTab === "deployment" && <DeploymentTab />}
               {activeTab === "copilot" && <CopilotTab />}
+              {activeTab === "specs" && <SpecsExplorerTab />}
             </motion.div>
           </AnimatePresence>
         </main>
@@ -1195,6 +1234,188 @@ function MessagingTab({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Advanced Messaging States
+  const [activeChannel, setActiveChannel] = useState<"general" | "architecture" | "billing" | "sysadmin">("general");
+  const [messageText, setMessageText] = useState("");
+  const [isTyping, setIsTyping] = useState<string | null>(null);
+
+  // Chat message list
+  const [chatMessages, setChatMessages] = useState<any[]>([
+    {
+      id: "m-1",
+      channel: "general",
+      sender: "Joseph (Lead Developer)",
+      role: "Lead Developer",
+      roleColor: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+      avatarColor: "bg-indigo-600",
+      avatarText: "JD",
+      text: "Welcome to the JUANET project communications space! Our local environment is fully compiled and active. We can use this channel for daily system syncs.",
+      time: "9:15 AM",
+      status: "read"
+    },
+    {
+      id: "m-2",
+      channel: "general",
+      sender: "Mary (SaaS Architect)",
+      role: "SaaS Architect",
+      roleColor: "bg-violet-500/10 text-violet-400 border-violet-500/20",
+      avatarColor: "bg-violet-600",
+      avatarText: "MK",
+      text: "I've uploaded the initial system architecture specs to the Secure Attachment Vault. Decoupled general ledger and payment routing modules are saved under project_files.",
+      time: "9:22 AM",
+      status: "read"
+    },
+    {
+      id: "m-3",
+      channel: "architecture",
+      sender: "Mary (SaaS Architect)",
+      role: "SaaS Architect",
+      roleColor: "bg-violet-500/10 text-violet-400 border-violet-500/20",
+      avatarColor: "bg-violet-600",
+      avatarText: "MK",
+      text: "The Phase 2 database entity blueprints are ready. If you click on the 'SaaS Specs Explorer' tab, you can view the exact table schemas in realtime.",
+      time: "Yesterday",
+      status: "read"
+    },
+    {
+      id: "m-4",
+      channel: "billing",
+      sender: "Finances Webhook",
+      role: "Finances System",
+      roleColor: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+      avatarColor: "bg-amber-600",
+      avatarText: "FS",
+      text: "Completed Safaricom Daraja STK Push routing rules. Inbound API callback requests now decrypt secure payload hashes and update payment ledger entries instantly.",
+      time: "Yesterday",
+      status: "read"
+    },
+    {
+      id: "m-5",
+      channel: "sysadmin",
+      sender: "SaaS Dev-Bot",
+      role: "System Bot",
+      roleColor: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+      avatarColor: "bg-cyan-600",
+      avatarText: "DB",
+      text: "Development containers running behind reverse proxy on Port 3000. All routing and hot reloads are stable.",
+      time: "2 hours ago",
+      status: "read"
+    }
+  ]);
+
+  const channels = [
+    { id: "general", name: "# general-sync", desc: "Main chat room for the tech & management team" },
+    { id: "architecture", name: "# database-architects", desc: "Reviewing database tables, RLS claims, and constraints" },
+    { id: "billing", name: "# billing-mpesa", desc: "Testing Daraja STK push and payment callbacks" },
+    { id: "sysadmin", name: "# DevOps-sysadmin", desc: "Checking sandbox system uptime, ports, and metrics" }
+  ];
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageText.trim()) return;
+
+    const userMsg = {
+      id: `m-u-${Date.now()}`,
+      channel: activeChannel,
+      sender: "You (Client Partner)",
+      role: "Client",
+      roleColor: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+      avatarColor: "bg-emerald-600",
+      avatarText: "CL",
+      text: messageText,
+      time: "Just now",
+      status: "sent"
+    };
+
+    setChatMessages(prev => [...prev, userMsg]);
+    const originalText = messageText;
+    setMessageText("");
+
+    // Simulate status update to delivered and then read
+    setTimeout(() => {
+      setChatMessages(prev =>
+        prev.map(m => m.id === userMsg.id ? { ...m, status: "delivered" } : m)
+      );
+    }, 600);
+
+    setTimeout(() => {
+      setChatMessages(prev =>
+        prev.map(m => m.id === userMsg.id ? { ...m, status: "read" } : m)
+      );
+    }, 1200);
+
+    // Simulate Team Typing auto-response
+    const responderName = 
+      activeChannel === "general" ? "Joseph (Lead Developer)" :
+      activeChannel === "architecture" ? "Mary (SaaS Architect)" :
+      activeChannel === "billing" ? "Finances Webhook" : "SaaS Dev-Bot";
+
+    setTimeout(() => {
+      setIsTyping(responderName);
+    }, 1500);
+
+    setTimeout(() => {
+      setIsTyping(null);
+      
+      let replyText = "Message securely compiled and stored. Our technical representatives are reviewing this thread.";
+      let rRole = "Lead Developer";
+      let rRoleColor = "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
+      let rAvatarColor = "bg-indigo-600";
+      let rAvatarText = "JD";
+
+      const textLower = originalText.toLowerCase();
+
+      if (activeChannel === "general") {
+        if (textLower.includes("update") || textLower.includes("progress")) {
+          replyText = "Indeed. I have logged several updates in the sidebar. We're working on final MPESA STK integration loops.";
+        } else {
+          replyText = "Understood. The project structure is setup beautifully. We are maintaining an active connection and monitoring your feedback here!";
+        }
+      } else if (activeChannel === "architecture") {
+        rRole = "SaaS Architect";
+        rRoleColor = "bg-violet-500/10 text-violet-400 border-violet-500/20";
+        rAvatarColor = "bg-violet-600";
+        rAvatarText = "MK";
+        if (textLower.includes("schema") || textLower.includes("table") || textLower.includes("postgres")) {
+          replyText = "All tables are in perfect sync with PostgreSQL physical naming standards. Check our SaaS Specs Explorer for full SQL scripts.";
+        } else {
+          replyText = "The Phase 2 schema is mapped using composite key pairings for financial ledger entries. It keeps calculations extremely precise.";
+        }
+      } else if (activeChannel === "billing") {
+        rRole = "Finances System";
+        rRoleColor = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+        rAvatarColor = "bg-amber-600";
+        rAvatarText = "FS";
+        if (textLower.includes("mpesa") || textLower.includes("paybill") || textLower.includes("daraja")) {
+          replyText = "Daraja payment endpoints are operational. If you go to the Payments tab, you can trigger simulated STK push requests and see them log instantly.";
+        } else {
+          replyText = "Billing channels verified. Our secure multi-gateway manager routing table will route any KES payments directly to MPESA.";
+        }
+      } else if (activeChannel === "sysadmin") {
+        rRole = "System Bot";
+        rRoleColor = "bg-cyan-500/10 text-cyan-400 border-cyan-500/20";
+        rAvatarColor = "bg-cyan-600";
+        rAvatarText = "DB";
+        replyText = "System environment report: Port 3000 normal. CPU 0.8%. All Express router middleware scopes are active and fully operational.";
+      }
+
+      const botMsg = {
+        id: `m-bot-${Date.now()}`,
+        channel: activeChannel,
+        sender: responderName,
+        role: rRole,
+        roleColor: rRoleColor,
+        avatarColor: rAvatarColor,
+        avatarText: rAvatarText,
+        text: replyText,
+        time: "Just now",
+        status: "read"
+      };
+
+      setChatMessages(prev => [...prev, botMsg]);
+    }, 3200);
+  };
+
   const submitUpdate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!updateText.trim()) return;
@@ -1235,97 +1456,245 @@ function MessagingTab({
     }
   };
 
+  const activeChannelObj = channels.find(c => c.id === activeChannel);
+  const filteredMessages = chatMessages.filter(m => m.channel === activeChannel);
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
         <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
           <MessageSquare size={22} className="text-indigo-400" />
           Project Communications & Attachments Vault
         </h3>
-        <p className="text-xs text-slate-400">Track milestones updates and secure project files delivery lists.</p>
+        <p className="text-xs text-slate-400">
+          Secure, isolated workspace channel messaging, delivery directories, and audit files.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Project logs & updates */}
-        <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/20 space-y-4">
-          <h4 className="text-sm font-bold text-slate-200">Submit Progress Update Log (`project_updates`)</h4>
-          <form onSubmit={submitUpdate} className="flex gap-2">
-            <input
-              type="text"
-              value={updateText}
-              onChange={(e) => setUpdateText(e.target.value)}
-              placeholder="Submit daily project progress logs..."
-              className="flex-1 bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-300"
-              required
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold flex items-center gap-1 transition-all"
-            >
-              <Send size={12} /> Log Update
-            </button>
-          </form>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Project Team Messenger (2 Cols on desktop) */}
+        <div className="xl:col-span-2 rounded-xl border border-slate-800 bg-slate-900/20 flex flex-col h-[600px] overflow-hidden">
+          {/* Header banner */}
+          <div className="p-4 bg-slate-900/40 border-b border-slate-850 flex justify-between items-center shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 bg-indigo-500/10 text-indigo-400 rounded-lg border border-indigo-500/10">
+                <Users size={16} />
+              </span>
+              <div>
+                <h4 className="text-xs font-bold text-slate-100 font-mono">JUANET Project Chat Engine</h4>
+                <p className="text-[10px] text-slate-500">Secure end-to-end channel messaging workspace</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[9px] font-mono font-bold text-emerald-400 tracking-wider uppercase">Connection secure</span>
+            </div>
+          </div>
 
-          <div className="space-y-3 pt-3 border-t border-slate-900">
-            <span className="text-[9px] font-mono text-slate-500 uppercase block">Historical Updates:</span>
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-              {projectUpdates.map(up => (
-                <div key={up.id} className="p-3 bg-slate-950 border border-slate-900 rounded text-xs">
-                  <div className="flex justify-between font-mono text-indigo-400 mb-1 text-[10px]">
-                    <span>SYSTEM_LOG_{up.id}</span>
-                    <span>{up.date}</span>
+          <div className="flex-1 flex overflow-hidden">
+            {/* Sidebar Channels List */}
+            <div className="w-1/3 md:w-1/4 border-r border-slate-850 bg-slate-950/20 flex flex-col p-2.5 space-y-1 overflow-y-auto shrink-0">
+              <span className="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-widest block px-2 py-1">
+                Channels
+              </span>
+              {channels.map(chan => {
+                const isActive = activeChannel === chan.id;
+                return (
+                  <button
+                    key={chan.id}
+                    onClick={() => {
+                      setActiveChannel(chan.id as any);
+                    }}
+                    className={`w-full text-left text-xs px-2.5 py-2.5 rounded-lg transition-all border flex flex-col items-start ${
+                      isActive
+                        ? "bg-indigo-600/15 border-indigo-500/25 text-indigo-300 font-semibold"
+                        : "bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"
+                    }`}
+                  >
+                    <span className="truncate w-full font-mono font-medium">{chan.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Chat Messages Body */}
+            <div className="flex-1 flex flex-col overflow-hidden bg-slate-950/30">
+              {/* Active channel info header */}
+              <div className="px-4 py-2.5 bg-slate-900/10 border-b border-slate-900 flex flex-col shrink-0">
+                <span className="text-xs font-bold text-slate-200 font-mono">{activeChannelObj?.name}</span>
+                <span className="text-[10px] text-slate-500 truncate">{activeChannelObj?.desc}</span>
+              </div>
+
+              {/* Message scroll list */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col scroll-smooth">
+                {filteredMessages.map(msg => {
+                  const isMe = msg.role === "Client";
+                  return (
+                    <div key={msg.id} className={`flex gap-2.5 max-w-[85%] ${isMe ? "ml-auto flex-row-reverse" : "mr-auto"}`}>
+                      {/* Avatar */}
+                      <div className={`w-7 h-7 rounded-full text-white flex items-center justify-center font-bold font-mono text-[10px] shrink-0 ${msg.avatarColor}`}>
+                        {msg.avatarText}
+                      </div>
+
+                      {/* Chat text box */}
+                      <div className="space-y-1">
+                        <div className={`flex items-center gap-1.5 text-[10px] ${isMe ? "justify-end" : "justify-start"}`}>
+                          <span className="font-bold text-slate-300 font-mono">{msg.sender}</span>
+                          <span className={`text-[8px] font-mono px-1.5 py-0.1 border rounded uppercase ${msg.roleColor}`}>
+                            {msg.role}
+                          </span>
+                        </div>
+                        <div className={`p-3 rounded-xl border text-xs leading-relaxed ${
+                          isMe
+                            ? "bg-indigo-600/15 border-indigo-500/20 text-slate-200 rounded-tr-none"
+                            : "bg-slate-900 border-slate-850 text-slate-300 rounded-tl-none"
+                        }`}>
+                          <p>{msg.text}</p>
+                        </div>
+                        <div className={`flex items-center gap-1 text-[9px] font-mono text-slate-500 ${isMe ? "justify-end" : "justify-start"}`}>
+                          <span>{msg.time}</span>
+                          {isMe && (
+                            <span className="text-indigo-400 font-bold">
+                              {msg.status === "read" ? "✓✓" : "✓"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Simulated Typing Indicator */}
+                {isTyping && (
+                  <div className="flex gap-2.5 max-w-[85%] mr-auto items-center">
+                    <div className="w-7 h-7 rounded-full bg-indigo-900 text-white flex items-center justify-center font-bold font-mono text-[10px] animate-pulse">
+                      ...
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-slate-500 font-mono">{isTyping} is typing...</span>
+                      <div className="p-3 bg-slate-900/50 border border-slate-850 rounded-xl rounded-tl-none flex items-center gap-1 px-4 py-2.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500 animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-slate-300 leading-relaxed">{up.text}</p>
-                </div>
-              ))}
+                )}
+              </div>
+
+              {/* Chat Send Form */}
+              <form onSubmit={handleSendMessage} className="p-3 bg-slate-900/40 border-t border-slate-850 flex gap-2 shrink-0">
+                <input
+                  type="text"
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  placeholder={`Send direct message to ${activeChannelObj?.name}...`}
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-300 animate-none"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold flex items-center gap-1.5 transition-all shadow shadow-indigo-600/10"
+                >
+                  <Send size={12} /> Send
+                </button>
+              </form>
             </div>
           </div>
         </div>
 
-        {/* File directory drag-drop */}
-        <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/20 space-y-4">
-          <h4 className="text-sm font-bold text-slate-200">Secure Attachment Deliverables Vault (`project_files`)</h4>
-          
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
-            className={`p-6 rounded-lg border-2 border-dashed text-center cursor-pointer transition-all ${
-              isDragging 
-                ? "border-indigo-500 bg-indigo-600/10" 
-                : "border-slate-800 bg-slate-950/40 hover:border-slate-700"
-            }`}
-          >
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={(e) => { if (e.target.files) processMockFiles(e.target.files); }}
-              className="hidden"
-              multiple
-            />
-            <FolderOpen className="mx-auto text-indigo-400 mb-2" size={32} />
-            <p className="text-xs font-semibold text-slate-300">Drag & drop deliverables here, or click to browse</p>
-            <p className="text-[10px] text-slate-500 mt-1 uppercase font-mono">SUPPORTS ARCHITECTURAL SPEC PDFS, CODES, WIREFRAMES</p>
+        {/* Secure File Vault & Progress Logs (1 Col on desktop) */}
+        <div className="xl:col-span-1 flex flex-col gap-6 h-[600px]">
+          {/* File directory drag-drop */}
+          <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/20 space-y-3 flex-1 flex flex-col justify-between overflow-hidden">
+            <div>
+              <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5 font-mono">
+                <FolderOpen size={14} className="text-indigo-400" />
+                Secure Files Vault (`project_files`)
+              </h4>
+              <p className="text-[10px] text-slate-500">Decoupled attachments and asset distribution directory</p>
+            </div>
+            
+            <div
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`p-4 rounded-lg border-2 border-dashed text-center cursor-pointer transition-all flex-1 flex flex-col justify-center items-center ${
+                isDragging 
+                  ? "border-indigo-500 bg-indigo-600/10" 
+                  : "border-slate-800 bg-slate-950/40 hover:border-slate-700"
+              }`}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={(e) => { if (e.target.files) processMockFiles(e.target.files); }}
+                className="hidden"
+                multiple
+              />
+              <FolderOpen className="text-indigo-400 mb-1.5" size={24} />
+              <p className="text-[11px] font-semibold text-slate-300">Drag & drop deliverables, or click</p>
+              <p className="text-[9px] text-slate-500 mt-0.5 uppercase font-mono">SUPPORTS PDF, SQL, CODES</p>
+            </div>
+
+            <div className="space-y-1.5 pt-2 border-t border-slate-900 overflow-hidden flex flex-col h-1/2">
+              <span className="text-[9px] font-mono text-slate-500 uppercase block shrink-0">Active Attachments:</span>
+              <div className="space-y-1 overflow-y-auto pr-1 flex-1">
+                {projectFiles.map(file => (
+                  <div key={file.id} className="flex justify-between items-center p-2 rounded bg-slate-950/60 border border-slate-900 text-[11px]">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <FileText size={12} className="text-indigo-400 shrink-0" />
+                      <div className="min-w-0">
+                        <span className="font-bold text-slate-300 block text-[10px] truncate max-w-[150px]">{file.name}</span>
+                        <span className="text-[8px] text-slate-500 font-mono block uppercase">{file.type} &bull; {file.size}</span>
+                      </div>
+                    </div>
+                    <button className="p-1 text-slate-500 hover:text-slate-300 transition-colors shrink-0">
+                      <Download size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2 pt-3 border-t border-slate-900">
-            <span className="text-[9px] font-mono text-slate-500 uppercase block">Active Delivery Directory attachments:</span>
-            <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-              {projectFiles.map(file => (
-                <div key={file.id} className="flex justify-between items-center p-2 rounded bg-slate-950/60 border border-slate-900 text-xs">
-                  <div className="flex items-center gap-2">
-                    <FileText size={14} className="text-indigo-400" />
-                    <div>
-                      <span className="font-bold text-slate-300 block text-[11px] truncate max-w-[200px]">{file.name}</span>
-                      <span className="text-[9px] text-slate-500 font-mono block uppercase">{file.type} &bull; {file.size}</span>
+          {/* Project updates logs */}
+          <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/20 space-y-3 h-1/2 flex flex-col overflow-hidden">
+            <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5 font-mono">
+              <Activity size={14} className="text-indigo-400" />
+              Progress Logs (`project_updates`)
+            </h4>
+            
+            <form onSubmit={submitUpdate} className="flex gap-1.5 shrink-0">
+              <input
+                type="text"
+                value={updateText}
+                onChange={(e) => setUpdateText(e.target.value)}
+                placeholder="Log progress status..."
+                className="flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-indigo-500 text-slate-300"
+                required
+              />
+              <button
+                type="submit"
+                className="px-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[10px] font-semibold flex items-center gap-1 transition-all"
+              >
+                Log Status
+              </button>
+            </form>
+
+            <div className="space-y-1.5 pt-1.5 border-t border-slate-900 overflow-hidden flex flex-col flex-1">
+              <span className="text-[9px] font-mono text-slate-500 uppercase block shrink-0">Historical Updates:</span>
+              <div className="space-y-1.5 overflow-y-auto pr-1 flex-1">
+                {projectUpdates.map(up => (
+                  <div key={up.id} className="p-2 bg-slate-950/60 border border-slate-900 rounded text-[10px]">
+                    <div className="flex justify-between font-mono text-indigo-400 mb-0.5 text-[8px]">
+                      <span>LOG_{up.id}</span>
+                      <span>{up.date}</span>
                     </div>
+                    <p className="text-slate-300 leading-relaxed">{up.text}</p>
                   </div>
-                  <button className="p-1 text-slate-500 hover:text-slate-300 transition-colors">
-                    <Download size={14} />
-                  </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -2258,22 +2627,199 @@ function PaymentsTab({
 }
 
 // 8. Blog CMS Tab Component
-function BlogTab({ comments, setComments }: { comments: any[]; setComments: React.Dispatch<React.SetStateAction<any[]>> }) {
+function BlogTab({ 
+  comments, 
+  setComments,
+  blogPosts,
+  setBlogPosts
+}: { 
+  comments: any[]; 
+  setComments: React.Dispatch<React.SetStateAction<any[]>>;
+  blogPosts: any[];
+  setBlogPosts: React.Dispatch<React.SetStateAction<any[]>>;
+}) {
   const [commentName, setCommentName] = useState("");
   const [commentText, setCommentText] = useState("");
   const [selectedPostId, setSelectedPostId] = useState("post-1");
+  const [activeSubTab, setActiveSubTab] = useState<"reader" | "cms">("reader");
 
-  const blogPosts = [
-    {
-      id: "post-1",
-      title: "Building Resilient Financial Audits with MPESA Daraja API & Postgres Ledger",
-      slug: "mpesa-daraja-api-audit",
-      excerpt: "Explore deep integration strategies for Safaricom Paybill callbacks, validating request structures, and maintaining transaction isolation.",
-      category: "Cloud Engineering",
-      author: "Juan",
-      date: "June 25, 2026"
+  // Form State for creating/editing posts
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [formTitle, setFormTitle] = useState("");
+  const [formSlug, setFormSlug] = useState("");
+  const [formCategory, setFormCategory] = useState("Cloud Engineering");
+  const [formAuthor, setFormAuthor] = useState("Juan");
+  const [formExcerpt, setFormExcerpt] = useState("");
+  const [formContent, setFormContent] = useState("");
+  const [formStatus, setFormStatus] = useState<"draft" | "published">("published");
+  const [formMetaDesc, setFormMetaDesc] = useState("");
+  const [formKeyword, setFormKeyword] = useState("");
+
+  const [notification, setNotification] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  const showNotification = (type: "success" | "error", text: string) => {
+    setNotification({ type, text });
+    setTimeout(() => setNotification(null), 4000);
+  };
+
+  // Auto slug generation helper
+  const handleTitleChange = (val: string) => {
+    setFormTitle(val);
+    if (!editingPostId) {
+      const slugified = val
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-")
+        .trim();
+      setFormSlug(slugified);
     }
-  ];
+  };
+
+  const loadPostForEditing = (post: any) => {
+    setEditingPostId(post.id);
+    setFormTitle(post.title);
+    setFormSlug(post.slug);
+    setFormCategory(post.category);
+    setFormAuthor(post.author);
+    setFormExcerpt(post.excerpt);
+    setFormContent(post.content || "");
+    setFormStatus(post.status || "published");
+    setFormMetaDesc(post.metaDescription || "");
+    setFormKeyword(post.targetKeyword || "");
+    showNotification("success", `Loaded "${post.title}" into writer canvas.`);
+  };
+
+  const clearForm = () => {
+    setEditingPostId(null);
+    setFormTitle("");
+    setFormSlug("");
+    setFormCategory("Cloud Engineering");
+    setFormAuthor("Juan");
+    setFormExcerpt("");
+    setFormContent("");
+    setFormStatus("published");
+    setFormMetaDesc("");
+    setFormKeyword("");
+  };
+
+  const handleSavePost = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formTitle.trim() || !formSlug.trim()) {
+      showNotification("error", "Title and slug are required fields.");
+      return;
+    }
+
+    const postPayload = {
+      id: editingPostId || `post-${Date.now()}`,
+      title: formTitle,
+      slug: formSlug,
+      category: formCategory,
+      author: formAuthor,
+      date: new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+      excerpt: formExcerpt,
+      content: formContent,
+      status: formStatus,
+      metaDescription: formMetaDesc,
+      targetKeyword: formKeyword
+    };
+
+    if (editingPostId) {
+      // Edit existing post
+      setBlogPosts(prev => prev.map(p => p.id === editingPostId ? postPayload : p));
+      showNotification("success", "Blog post successfully updated!");
+    } else {
+      // Create new post
+      setBlogPosts(prev => [postPayload, ...prev]);
+      setSelectedPostId(postPayload.id); // Auto-select the newly created post
+      showNotification("success", "New blog post published successfully!");
+    }
+
+    clearForm();
+    setActiveSubTab("reader");
+  };
+
+  const handleDeletePost = (id: string, title: string) => {
+    if (confirm(`Are you sure you want to delete "${title}"?`)) {
+      setBlogPosts(prev => prev.filter(p => p.id !== id));
+      showNotification("success", "Blog post permanently deleted.");
+      if (selectedPostId === id) {
+        setSelectedPostId("post-1");
+      }
+    }
+  };
+
+  const togglePostStatus = (id: string) => {
+    setBlogPosts(prev =>
+      prev.map(p => {
+        if (p.id === id) {
+          const newStatus = p.status === "draft" ? "published" : "draft";
+          showNotification("success", `Post status updated to ${newStatus}.`);
+          return { ...p, status: newStatus };
+        }
+        return p;
+      })
+    );
+  };
+
+  // SEO Score & Checklist Calculation on the fly
+  const calculateSEO = () => {
+    const checks = {
+      titleKeyword: false,
+      slugKeyword: false,
+      titleLength: false,
+      metaLength: false,
+      bodyKeyword: false,
+      wordCount: false
+    };
+
+    let score = 0;
+    const kw = formKeyword.trim().toLowerCase();
+
+    // Word Count
+    const words = formContent.trim().split(/\s+/).filter(Boolean).length;
+    if (words >= 100) {
+      checks.wordCount = true;
+      score += 15;
+    }
+
+    // Title Length (30-70 chars is standard optimal range)
+    if (formTitle.length >= 25 && formTitle.length <= 75) {
+      checks.titleLength = true;
+      score += 15;
+    }
+
+    // Meta Description Length (50-160 chars)
+    if (formMetaDesc.length >= 45 && formMetaDesc.length <= 165) {
+      checks.metaLength = true;
+      score += 15;
+    }
+
+    if (kw) {
+      // Title Keyword Check
+      if (formTitle.toLowerCase().includes(kw)) {
+        checks.titleKeyword = true;
+        score += 20;
+      }
+
+      // Slug Keyword Check
+      const slugifiedKw = kw.replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-");
+      if (formSlug.toLowerCase().includes(slugifiedKw) || formSlug.toLowerCase().includes(kw.replace(/\s+/g, "-"))) {
+        checks.slugKeyword = true;
+        score += 15;
+      }
+
+      // Body Keyword Check
+      if (formContent.toLowerCase().includes(kw)) {
+        checks.bodyKeyword = true;
+        score += 20;
+      }
+    }
+
+    return { score, checks, wordCount: words };
+  };
+
+  const { score: seoScore, checks: seoChecks, wordCount } = calculateSEO();
 
   const submitComment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -2288,87 +2834,531 @@ function BlogTab({ comments, setComments }: { comments: any[]; setComments: Reac
     setComments([...comments, newComment]);
     setCommentName("");
     setCommentText("");
+    showNotification("success", "Comment successfully posted to secure blog timeline.");
   };
 
   const activeComments = comments.filter(c => c.postId === selectedPostId);
+  const activePost = blogPosts.find(p => p.id === selectedPostId) || blogPosts[0];
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
-          <BookOpen size={22} className="text-indigo-400" />
-          JUANET Marketing & Headless CMS System
-        </h3>
-        <p className="text-xs text-slate-400">Marketing platform and blog postings managing metadata directories and user communities.</p>
+    <div className="space-y-6">
+      {/* Tab Header and SubTab Switcher */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-900 pb-4 shrink-0">
+        <div>
+          <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
+            <BookOpen size={22} className="text-indigo-400" />
+            JUANET Marketing & Headless SEO CMS System
+          </h3>
+          <p className="text-xs text-slate-400">
+            Write technical articles, inspect real-time search engine optimization, and curate community feedback instantly.
+          </p>
+        </div>
+
+        {/* Navigation Toggles */}
+        <div className="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800/80 self-start md:self-auto shrink-0">
+          <button
+            onClick={() => setActiveSubTab("reader")}
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold font-mono uppercase transition-all flex items-center gap-1.5 ${
+              activeSubTab === "reader"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Eye size={13} />
+            Blog Preview
+          </button>
+          <button
+            onClick={() => {
+              setActiveSubTab("cms");
+              clearForm();
+            }}
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold font-mono uppercase transition-all flex items-center gap-1.5 ${
+              activeSubTab === "cms"
+                ? "bg-indigo-600 text-white shadow-sm"
+                : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Settings size={13} />
+            CMS Admin Workspace
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Blog Post List & Body (2 cols) */}
-        <div className="xl:col-span-2 space-y-6">
-          {blogPosts.map(post => (
-            <div key={post.id} className="p-6 rounded-xl border border-slate-800 bg-slate-900/20 space-y-4">
-              <div>
-                <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase">
-                  {post.category}
-                </span>
-                <h4 className="text-lg font-bold text-slate-200 mt-2 leading-snug">{post.title}</h4>
-                <div className="flex items-center gap-2 text-[10px] text-slate-500 pt-1 font-mono">
-                  <span>BY {post.author.toUpperCase()}</span>
-                  <span>&bull;</span>
-                  <span>{post.date}</span>
+      {/* Floating Alert Notifications */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: -15, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -15, scale: 0.95 }}
+            className={`fixed top-4 right-4 z-50 p-3.5 rounded-xl border shadow-lg text-xs font-semibold flex items-center gap-2.5 max-w-sm ${
+              notification.type === "success"
+                ? "bg-emerald-950/90 border-emerald-500/30 text-emerald-300"
+                : "bg-rose-950/90 border-rose-500/30 text-rose-300"
+            }`}
+          >
+            <CheckCircle2 size={16} className={notification.type === "success" ? "text-emerald-400" : "text-rose-400"} />
+            <span>{notification.text}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* SUB TAB 1: Blog Frontend Preview */}
+      {activeSubTab === "reader" && (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-[550px]">
+          {/* Left Column - Articles Selector Side Panel */}
+          <div className="lg:col-span-1 bg-slate-900/10 border border-slate-800 rounded-xl p-4 flex flex-col space-y-3.5 h-[550px] overflow-hidden">
+            <span className="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-widest block px-1">
+              Select Article
+            </span>
+
+            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+              {blogPosts.length === 0 ? (
+                <div className="text-center text-xs text-slate-600 py-10 font-mono">
+                  No articles available. Create one in the CMS panel!
                 </div>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed">{post.excerpt}</p>
-              <div className="p-4 rounded-lg bg-slate-950 border border-slate-900 text-xs text-slate-300 space-y-2 leading-relaxed">
-                <p>When implementing asynchronous transaction checkouts (Lipa Na M-PESA online), your API router must receive callbacks at `/api/payments/mpesa-callback` which Safaricom triggers as POST requests. The primary danger of transactions is double-spending or fake signature injections.</p>
-                <p>By enforcing composite key constraints (`CheckoutRequestID`) inside the payments ledger table and verifying incoming payload checksums, the platform completely immunizes our accounting columns from external manipulations.</p>
+              ) : (
+                blogPosts.map(post => {
+                  const isSelected = selectedPostId === post.id;
+                  const isDraft = post.status === "draft";
+                  return (
+                    <button
+                      key={post.id}
+                      onClick={() => setSelectedPostId(post.id)}
+                      className={`w-full text-left p-3 rounded-lg transition-all border flex flex-col items-start gap-1 ${
+                        isSelected
+                          ? "bg-indigo-600/15 border-indigo-500/30 text-indigo-300"
+                          : "bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 w-full">
+                        <span className="bg-slate-900 text-indigo-400 px-1.5 py-0.5 rounded text-[8px] font-mono border border-slate-800 uppercase font-bold shrink-0">
+                          {post.category}
+                        </span>
+                        {isDraft && (
+                          <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1 rounded text-[8px] font-mono font-bold uppercase shrink-0">
+                            Draft
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs font-bold font-sans line-clamp-2 mt-1 leading-snug">
+                        {post.title}
+                      </span>
+                      <span className="text-[9px] font-mono text-slate-500 uppercase mt-1">
+                        {post.date}
+                      </span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+          {/* Center & Right Column - Article Body & Comments Viewer */}
+          <div className="lg:col-span-3 grid grid-cols-1 xl:grid-cols-3 gap-6 h-[550px]">
+            {/* Main Article Content Panel (2 cols) */}
+            <div className="xl:col-span-2 bg-slate-950 border border-slate-800 rounded-xl flex flex-col h-full overflow-hidden">
+              {activePost ? (
+                <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-4 select-text">
+                  <div>
+                    <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2.5 py-0.5 rounded text-[10px] font-mono font-bold uppercase">
+                      {activePost.category}
+                    </span>
+                    <h4 className="text-xl font-bold font-display text-white mt-2.5 leading-snug">
+                      {activePost.title}
+                    </h4>
+                    <div className="flex items-center gap-2.5 text-[10px] text-slate-500 pt-1.5 font-mono">
+                      <span>BY {activePost.author.toUpperCase()}</span>
+                      <span>&bull;</span>
+                      <span>{activePost.date}</span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-300 font-medium italic border-l-2 border-indigo-500 pl-3 leading-relaxed py-1">
+                    {activePost.excerpt}
+                  </p>
+
+                  <div className="pt-4 border-t border-slate-900 text-slate-300 text-xs leading-relaxed space-y-3 whitespace-pre-line select-text">
+                    {activePost.content || (
+                      <p className="text-slate-500 font-mono italic">No rich body content was written for this article.</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-600 font-mono text-xs">
+                  Select an article to view content.
+                </div>
+              )}
+            </div>
+
+            {/* Comments Timeline Panel (1 col) */}
+            <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/20 flex flex-col h-full overflow-hidden">
+              <h4 className="text-xs font-mono text-slate-400 font-extrabold uppercase shrink-0 pb-2 border-b border-slate-900">
+                Community Discussions (`blog_comments`)
+              </h4>
+              
+              {/* Form inside comments */}
+              <form onSubmit={submitComment} className="space-y-2 py-3 border-b border-slate-900 shrink-0">
+                <input
+                  type="text"
+                  placeholder="Your Name"
+                  value={commentName}
+                  onChange={(e) => setCommentName(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-850 rounded px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-indigo-500 text-slate-300 font-sans"
+                  required
+                />
+                <textarea
+                  placeholder="Join the discussion..."
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  rows={2}
+                  className="w-full bg-slate-950 border border-slate-850 rounded px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-indigo-500 text-slate-300 font-sans"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[10px] font-bold uppercase transition-colors shrink-0"
+                >
+                  Post Comment
+                </button>
+              </form>
+
+              {/* Feed of comments */}
+              <div className="flex-1 overflow-y-auto space-y-2.5 pt-3 pr-1">
+                {activeComments.length === 0 ? (
+                  <div className="text-center text-slate-600 font-mono text-[10px] py-12">
+                    No community feedback yet. Be the first to start the thread!
+                  </div>
+                ) : (
+                  activeComments.map(c => (
+                    <div key={c.id} className="p-2.5 rounded bg-slate-950 border border-slate-900 text-slate-400 space-y-1">
+                      <div className="flex justify-between font-mono text-indigo-400 text-[9px]">
+                        <span>{c.author}</span>
+                        <span>{c.date}</span>
+                      </div>
+                      <p className="text-slate-300 text-[11px] leading-relaxed select-text">{c.text}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* Comment sections */}
-        <div className="p-6 rounded-xl border border-slate-800 bg-slate-900/20 space-y-4 h-fit">
-          <h4 className="text-xs font-mono text-slate-400 font-extrabold uppercase">Community Discussions (`blog_comments`)</h4>
-          
-          <form onSubmit={submitComment} className="space-y-2">
-            <input
-              type="text"
-              placeholder="Your Name"
-              value={commentName}
-              onChange={(e) => setCommentName(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-indigo-500 text-slate-300 font-sans"
-              required
-            />
-            <textarea
-              placeholder="Join the discussion..."
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              rows={2}
-              className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-indigo-500 text-slate-300 font-sans"
-              required
-            />
-            <button
-              type="submit"
-              className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[10px] font-bold uppercase transition-colors"
-            >
-              Post Comment
-            </button>
-          </form>
-
-          <div className="space-y-2 pt-2 border-t border-slate-900 max-h-60 overflow-y-auto pr-1">
-            {activeComments.map(c => (
-              <div key={c.id} className="p-3 rounded bg-slate-950 text-xs border border-slate-900 text-slate-400 space-y-1">
-                <div className="flex justify-between font-mono text-indigo-400 text-[10px]">
-                  <span>{c.author}</span>
-                  <span>{c.date}</span>
-                </div>
-                <p className="text-slate-300 leading-normal">{c.text}</p>
-              </div>
-            ))}
           </div>
         </div>
-      </div>
+      )}
+
+      {/* SUB TAB 2: Admin CMS Editor Workspace */}
+      {activeSubTab === "cms" && (
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 min-h-[600px]">
+          {/* Left Panel: Form Composer (3 Columns on desktop) */}
+          <div className="xl:col-span-3 bg-slate-950/40 border border-slate-800 rounded-xl p-5 md:p-6 flex flex-col space-y-5">
+            <div className="flex justify-between items-center pb-3 border-b border-slate-900 shrink-0">
+              <h4 className="text-sm font-bold text-slate-100 font-mono uppercase flex items-center gap-1.5">
+                <FileText size={15} className="text-indigo-400" />
+                {editingPostId ? "Modify Blog Article Editor" : "Create Technical Blog Article"}
+              </h4>
+              {editingPostId && (
+                <button
+                  onClick={clearForm}
+                  className="text-[10px] font-mono text-rose-400 hover:text-rose-300 transition-colors uppercase border border-rose-950 bg-rose-950/20 px-2 py-0.5 rounded font-bold"
+                >
+                  Cancel Edit
+                </button>
+              )}
+            </div>
+
+            <form onSubmit={handleSavePost} className="space-y-4">
+              {/* Row 1: Title & Category */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-[10px] font-mono uppercase font-bold text-slate-400">Post Title *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Building Resilient Financial Audits with MPESA Daraja API"
+                    value={formTitle}
+                    onChange={(e) => handleTitleChange(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-200"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-mono uppercase font-bold text-slate-400">Category</label>
+                  <select
+                    value={formCategory}
+                    onChange={(e) => setFormCategory(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-200 font-mono"
+                  >
+                    <option value="Cloud Engineering">Cloud Engineering</option>
+                    <option value="Database Architecture">Database Architecture</option>
+                    <option value="Fintech Integration">Fintech Integration</option>
+                    <option value="SaaS Strategy">SaaS Strategy</option>
+                    <option value="DevOps Metrics">DevOps Metrics</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 2: Slug & Author */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2 space-y-1">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-mono uppercase font-bold text-slate-400">URL Slug *</label>
+                    <button
+                      type="button"
+                      onClick={() => handleTitleChange(formTitle)}
+                      className="text-[9px] font-mono text-indigo-400 hover:underline hover:text-indigo-300"
+                    >
+                      Regenerate
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. mpesa-daraja-api-audit"
+                    value={formSlug}
+                    onChange={(e) => setFormSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))}
+                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-300 font-mono"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-mono uppercase font-bold text-slate-400">Author Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Author name"
+                    value={formAuthor}
+                    onChange={(e) => setFormAuthor(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-300"
+                  />
+                </div>
+              </div>
+
+              {/* Excerpt Summary */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-mono uppercase font-bold text-slate-400">Excerpt / Meta Description Preview *</label>
+                <textarea
+                  required
+                  rows={2}
+                  placeholder="Summarize the core engineering lesson or strategic insights of this blog post..."
+                  value={formExcerpt}
+                  onChange={(e) => setFormExcerpt(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-300"
+                />
+              </div>
+
+              {/* Rich Body Content (Markdown supported) */}
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <label className="text-[10px] font-mono uppercase font-bold text-slate-400">Full Article Content (Markdown) *</label>
+                  <span className="text-[9px] font-mono text-slate-500">Supports standard copy pastes & markup logs</span>
+                </div>
+                <textarea
+                  required
+                  rows={7}
+                  placeholder="Write full article here. Double spacing creates paragraphs. Support standard markdown syntax like `code` tags..."
+                  value={formContent}
+                  onChange={(e) => setFormContent(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-300 font-mono leading-relaxed"
+                />
+              </div>
+
+              {/* Status and Action Buttons */}
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-slate-900">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono uppercase font-bold text-slate-400">Publication Status:</span>
+                    <div className="flex rounded border border-slate-800 bg-slate-950 overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setFormStatus("draft")}
+                        className={`px-3 py-1 text-[10px] font-mono uppercase font-bold transition-all ${
+                          formStatus === "draft" ? "bg-amber-600/20 text-amber-400 border-r border-slate-800" : "text-slate-500 hover:text-slate-300"
+                        }`}
+                      >
+                        Draft
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormStatus("published")}
+                        className={`px-3 py-1 text-[10px] font-mono uppercase font-bold transition-all ${
+                          formStatus === "published" ? "bg-emerald-600/20 text-emerald-400" : "text-slate-500 hover:text-slate-300"
+                        }`}
+                      >
+                        Publish
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={clearForm}
+                    className="px-4 py-2 text-xs font-semibold font-mono text-slate-400 hover:text-slate-200 uppercase bg-slate-950 rounded border border-slate-850"
+                  >
+                    Reset Canvas
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold uppercase flex items-center gap-1 shadow shadow-indigo-600/25"
+                  >
+                    <CheckCircle2 size={13} />
+                    {editingPostId ? "Update Article" : "Save and Publish"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Right Panel: SEO Analytics Assistant & Post Directory */}
+          <div className="xl:col-span-1 space-y-6 flex flex-col h-full justify-between">
+            {/* Live SEO Assistant Tool */}
+            <div className="bg-slate-900/20 border border-slate-800 rounded-xl p-4 space-y-4">
+              <div className="border-b border-slate-900 pb-2">
+                <h5 className="text-xs font-mono font-extrabold text-slate-300 uppercase flex items-center gap-1.5">
+                  <Sparkles size={13} className="text-indigo-400" />
+                  SEO Analyst Co-Pilot
+                </h5>
+                <p className="text-[10px] text-slate-500">Real-time target keyword metadata validation</p>
+              </div>
+
+              {/* Target Keyword input */}
+              <div className="space-y-1">
+                <label className="text-[9px] font-mono uppercase font-bold text-slate-400 block">Primary Target Keyword</label>
+                <input
+                  type="text"
+                  placeholder="e.g. MPESA Daraja API"
+                  value={formKeyword}
+                  onChange={(e) => setFormKeyword(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-850 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-indigo-500 text-slate-300 font-sans font-medium"
+                />
+              </div>
+
+              {/* Live Score Dial */}
+              <div className="flex items-center gap-3.5 bg-slate-950/60 p-3 rounded-lg border border-slate-900">
+                <div className="relative flex items-center justify-center shrink-0">
+                  {/* Custom Radial Border Progress */}
+                  <div className={`w-14 h-14 rounded-full flex flex-col items-center justify-center border-4 font-mono font-bold font-display text-sm ${
+                    seoScore >= 80 ? "border-emerald-500 text-emerald-400" :
+                    seoScore >= 50 ? "border-amber-500 text-amber-400" : "border-rose-500 text-rose-400"
+                  }`}>
+                    {seoScore}
+                    <span className="text-[8px] uppercase tracking-tighter text-slate-500 -mt-0.5">SCORE</span>
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[10px] font-mono font-bold uppercase block text-slate-300">
+                    {seoScore >= 80 ? "SEO Standard Met" :
+                     seoScore >= 50 ? "Needs Improvement" : "Sub-optimal SEO"}
+                  </span>
+                  <span className="text-[9px] text-slate-500 block leading-tight">
+                    {wordCount} words written. Add keywords to headers and metadata fields.
+                  </span>
+                </div>
+              </div>
+
+              {/* SEO Checklist rules */}
+              <div className="space-y-2 text-[10px]">
+                <span className="text-[9px] font-mono text-slate-500 uppercase tracking-wider block font-bold">SEO Checklist:</span>
+                <div className="space-y-1.5 font-mono">
+                  <div className="flex items-start gap-1.5">
+                    <span className={seoChecks.titleLength ? "text-emerald-400 font-bold" : "text-slate-600"}>
+                      {seoChecks.titleLength ? "✓" : "○"}
+                    </span>
+                    <span className={seoChecks.titleLength ? "text-slate-300" : "text-slate-500"}>
+                      Title length optimal (25-75 chars)
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className={seoChecks.wordCount ? "text-emerald-400 font-bold" : "text-slate-600"}>
+                      {seoChecks.wordCount ? "✓" : "○"}
+                    </span>
+                    <span className={seoChecks.wordCount ? "text-slate-300" : "text-slate-500"}>
+                      Body contains at least 100 words
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className={seoChecks.titleKeyword ? "text-emerald-400 font-bold" : "text-slate-600"}>
+                      {seoChecks.titleKeyword ? "✓" : "○"}
+                    </span>
+                    <span className={seoChecks.titleKeyword ? "text-slate-300" : "text-slate-500"}>
+                      Keyword is present in Title
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className={seoChecks.slugKeyword ? "text-emerald-400 font-bold" : "text-slate-600"}>
+                      {seoChecks.slugKeyword ? "✓" : "○"}
+                    </span>
+                    <span className={seoChecks.slugKeyword ? "text-slate-300" : "text-slate-500"}>
+                      Keyword is present in URL Slug
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className={seoChecks.bodyKeyword ? "text-emerald-400 font-bold" : "text-slate-600"}>
+                      {seoChecks.bodyKeyword ? "✓" : "○"}
+                    </span>
+                    <span className={seoChecks.bodyKeyword ? "text-slate-300" : "text-slate-500"}>
+                      Keyword is present in Body text
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-1.5">
+                    <span className={seoChecks.metaLength ? "text-emerald-400 font-bold" : "text-slate-600"}>
+                      {seoChecks.metaLength ? "✓" : "○"}
+                    </span>
+                    <span className={seoChecks.metaLength ? "text-slate-300" : "text-slate-500"}>
+                      Meta description optimal length
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Articles list manager inside CMS */}
+            <div className="bg-slate-900/20 border border-slate-800 rounded-xl p-4 flex-1 flex flex-col justify-between overflow-hidden min-h-[220px]">
+              <div>
+                <span className="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-widest block px-1 pb-2 border-b border-slate-900">
+                  Article Management
+                </span>
+                
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pt-2.5 pr-1 flex-1">
+                  {blogPosts.map(post => (
+                    <div key={post.id} className="flex justify-between items-center p-2 rounded bg-slate-950/60 border border-slate-900 text-xs">
+                      <div className="min-w-0 pr-2">
+                        <span className="font-bold text-slate-200 block text-[11px] truncate">{post.title}</span>
+                        <div className="flex items-center gap-1.5 text-[8px] font-mono uppercase mt-0.5 text-slate-500">
+                          <span>{post.category}</span>
+                          <span>&bull;</span>
+                          <button
+                            onClick={() => togglePostStatus(post.id)}
+                            className={`underline cursor-pointer font-extrabold ${post.status === "published" ? "text-emerald-400" : "text-amber-400"}`}
+                          >
+                            {post.status}
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => loadPostForEditing(post)}
+                          className="p-1 text-slate-400 hover:text-indigo-400 transition-colors"
+                          title="Edit article"
+                        >
+                          <FileText size={12} />
+                        </button>
+                        <button
+                          onClick={() => handleDeletePost(post.id, post.title)}
+                          className="p-1 text-slate-500 hover:text-rose-500 transition-colors"
+                          title="Delete article"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2754,6 +3744,272 @@ Ask me any technical query about JUANET. For example:
             >
               &bull; Complete RLS for Project Vault
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Custom Markdown renderer helpers
+const renderFormattedLine = (text: string) => {
+  let parts: (string | React.ReactNode)[] = [text];
+  
+  if (text.includes("**")) {
+    const newParts: (string | React.ReactNode)[] = [];
+    parts.forEach(part => {
+      if (typeof part === "string") {
+        const splitParts = part.split("**");
+        splitParts.forEach((subPart, idx) => {
+          if (idx % 2 === 1) {
+            newParts.push(<strong key={`b-${idx}`} className="text-white font-bold">{subPart}</strong>);
+          } else {
+            newParts.push(subPart);
+          }
+        });
+      } else {
+        newParts.push(part);
+      }
+    });
+    parts = newParts;
+  }
+  
+  if (text.includes("`")) {
+    const newParts: (string | React.ReactNode)[] = [];
+    parts.forEach(part => {
+      if (typeof part === "string") {
+        const splitParts = part.split("`");
+        splitParts.forEach((subPart, idx) => {
+          if (idx % 2 === 1) {
+            newParts.push(<code key={`c-${idx}`} className="bg-slate-900 text-indigo-300 px-1.5 py-0.5 rounded font-mono text-[11px] border border-slate-800/60">{subPart}</code>);
+          } else {
+            newParts.push(subPart);
+          }
+        });
+      } else {
+        newParts.push(part);
+      }
+    });
+    parts = newParts;
+  }
+  
+  return <>{parts}</>;
+};
+
+function parseMarkdown(text: string) {
+  const lines = text.split("\n");
+  let inCodeBlock = false;
+  let codeBlockContent: string[] = [];
+  const renderedElements: React.ReactNode[] = [];
+  
+  lines.forEach((line, index) => {
+    if (line.trim().startsWith("```")) {
+      if (inCodeBlock) {
+        renderedElements.push(
+          <pre key={`code-${index}`} className="bg-slate-950 p-4 rounded-lg border border-slate-900 font-mono text-xs text-indigo-300 overflow-x-auto my-3 select-text">
+            <code>{codeBlockContent.join("\n")}</code>
+          </pre>
+        );
+        codeBlockContent = [];
+        inCodeBlock = false;
+      } else {
+        inCodeBlock = true;
+      }
+      return;
+    }
+    
+    if (inCodeBlock) {
+      codeBlockContent.push(line);
+      return;
+    }
+    
+    const trimmed = line.trim();
+    if (trimmed.startsWith("# ")) {
+      renderedElements.push(<h1 key={index} className="text-2xl font-bold font-display text-white mt-6 mb-3 border-b border-slate-900 pb-2 select-text">{trimmed.substring(2)}</h1>);
+    } else if (trimmed.startsWith("## ")) {
+      renderedElements.push(<h2 key={index} className="text-xl font-semibold font-display text-indigo-300 mt-5 mb-2.5 select-text">{trimmed.substring(3)}</h2>);
+    } else if (trimmed.startsWith("### ")) {
+      renderedElements.push(<h3 key={index} className="text-lg font-medium font-display text-slate-200 mt-4 mb-2 select-text">{trimmed.substring(4)}</h3>);
+    } else if (trimmed.startsWith("#### ")) {
+      renderedElements.push(<h4 key={index} className="text-base font-medium font-display text-slate-300 mt-3 mb-1.5 select-text">{trimmed.substring(5)}</h4>);
+    } else if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
+      renderedElements.push(<li key={index} className="ml-5 list-disc text-slate-300 text-xs my-1 select-text">{renderFormattedLine(trimmed.substring(2))}</li>);
+    } else if (trimmed.startsWith("|")) {
+      renderedElements.push(
+        <div key={index} className="font-mono text-[11px] bg-slate-900/40 border-b border-slate-900 px-4 py-1.5 text-slate-300 flex select-all">
+          {renderFormattedLine(trimmed)}
+        </div>
+      );
+    } else if (trimmed === "") {
+      renderedElements.push(<div key={index} className="h-2" />);
+    } else {
+      renderedElements.push(<p key={index} className="text-slate-300 text-xs leading-relaxed my-1.5 select-text">{renderFormattedLine(trimmed)}</p>);
+    }
+  });
+  
+  return renderedElements;
+}
+
+function SpecsExplorerTab() {
+  const [docsList, setDocsList] = useState<{ name: string; path: string; category: string }[]>([]);
+  const [selectedDoc, setSelectedDoc] = useState<{ name: string; path: string; category: string } | null>(null);
+  const [docContent, setDocContent] = useState<string>("");
+  const [loadingList, setLoadingList] = useState<boolean>(true);
+  const [loadingContent, setLoadingContent] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  useEffect(() => {
+    async function fetchDocs() {
+      try {
+        setLoadingList(true);
+        const res = await fetch("/api/docs");
+        const data = await res.json();
+        if (data.files) {
+          setDocsList(data.files);
+          const master = data.files.find((f: any) => f.path === "JUANET_Master_Specification.md");
+          if (master) {
+            setSelectedDoc(master);
+          } else if (data.files.length > 0) {
+            setSelectedDoc(data.files[0]);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load documents list:", err);
+      } finally {
+        setLoadingList(false);
+      }
+    }
+    fetchDocs();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedDoc) return;
+    async function fetchDocContent() {
+      try {
+        setLoadingContent(true);
+        const res = await fetch(`/api/docs/content?path=${encodeURIComponent(selectedDoc.path)}`);
+        const data = await res.json();
+        if (data.content) {
+          setDocContent(data.content);
+        } else if (data.error) {
+          setDocContent(`Error loading document: ${data.error}`);
+        }
+      } catch (err: any) {
+        setDocContent(`Failed to connect to backend: ${err.message}`);
+      } finally {
+        setLoadingContent(false);
+      }
+    }
+    fetchDocContent();
+  }, [selectedDoc]);
+
+  const filteredDocs = docsList.filter(d => 
+    d.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
+          <FileText size={22} className="text-indigo-400" />
+          SaaS Specification Documents & Phase Blueprints
+        </h3>
+        <p className="text-xs text-slate-400">
+          Directly explore the architectural specifications, phase documentation, and database blueprints running in the JUANET environment.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[700px]">
+        {/* Left Sidebar Document Picker */}
+        <div className="lg:col-span-1 bg-slate-900/20 border border-slate-800 rounded-xl p-4 flex flex-col h-full overflow-hidden">
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Search specifications..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            {loadingList ? (
+              <div className="flex items-center justify-center py-10 text-xs text-slate-500 gap-2">
+                <RefreshCw size={14} className="animate-spin text-indigo-400" />
+                <span>Scanning workspace...</span>
+              </div>
+            ) : filteredDocs.length === 0 ? (
+              <div className="text-center text-xs text-slate-600 py-10 font-mono">No documents found matching search query.</div>
+            ) : (
+              Array.from(new Set(filteredDocs.map(d => d.category))).sort().map((cat: string) => {
+                const catDocs = filteredDocs.filter(d => d.category === cat);
+                if (catDocs.length === 0) return null;
+                const displayCategory = cat.replace(/^\d+\s+/, "");
+                return (
+                  <div key={cat} className="space-y-1">
+                    <span className="text-[9px] font-mono font-bold text-indigo-400 uppercase tracking-widest block px-2 mb-1.5">
+                      {displayCategory}
+                    </span>
+                    <div className="space-y-0.5">
+                      {catDocs.map(doc => {
+                        const isSelected = selectedDoc?.path === doc.path;
+                        return (
+                          <button
+                            key={doc.path}
+                            onClick={() => setSelectedDoc(doc)}
+                            className={`w-full text-left text-xs px-2.5 py-2 rounded-lg transition-all border flex items-start gap-2 ${
+                              isSelected
+                                ? "bg-indigo-600/15 border-indigo-500 text-indigo-300 font-semibold"
+                                : "bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40"
+                            }`}
+                          >
+                            <FileText size={14} className={`shrink-0 mt-0.5 ${isSelected ? "text-indigo-400" : "text-slate-500"}`} />
+                            <span className="truncate">{doc.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Right Content Viewer */}
+        <div className="lg:col-span-3 bg-slate-950 border border-slate-800 rounded-xl flex flex-col h-full overflow-hidden">
+          {/* Header */}
+          <div className="px-5 py-4 border-b border-slate-900 flex justify-between items-center shrink-0 bg-slate-900/10">
+            <div>
+              <h4 className="text-sm font-bold text-slate-100 flex items-center gap-1.5 font-display">
+                <Eye size={15} className="text-indigo-400" />
+                {selectedDoc ? selectedDoc.name : "Document Reader"}
+              </h4>
+              <span className="text-[10px] font-mono text-slate-500 uppercase mt-0.5 block">
+                Path: {selectedDoc ? selectedDoc.path : "N/A"}
+              </span>
+            </div>
+            {selectedDoc && (
+              <span className="text-[9px] font-mono bg-slate-900 text-indigo-400 px-2 py-0.5 rounded border border-slate-800 font-bold">
+                {selectedDoc.category}
+              </span>
+            )}
+          </div>
+
+          {/* Reader Viewport */}
+          <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-2 select-text selection:bg-indigo-600/30 scroll-smooth">
+            {loadingContent ? (
+              <div className="flex flex-col items-center justify-center h-full py-20 text-xs text-slate-500 gap-2">
+                <RefreshCw size={18} className="animate-spin text-indigo-400" />
+                <span>Reading document columns...</span>
+              </div>
+            ) : docContent ? (
+              parseMarkdown(docContent)
+            ) : (
+              <div className="text-center text-slate-600 font-mono text-xs py-20">
+                Select a blueprint document to parse and display its content.
+              </div>
+            )}
           </div>
         </div>
       </div>
