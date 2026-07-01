@@ -66,34 +66,36 @@ The documentation repository is organized into a modular tree structure. This hi
          ┌────────────────────────────┼────────────────────────────┐
          │                            │                            │
    Architecture Core              Subsystems Schemas           Finance Engine
-   ├── README.md                  ├── Core_Physical_Tables     ├── FINANCE_README.md
-   ├── Enterprise_Blueprint       ├── Auth_Physical_Tables     ├── 1_Chart_of_Accounts
-   ├── Entity_Dictionary          ├── CRM_Physical_Tables      ├── 1A_Posting_Rules
-   └── PostgreSQL_Standards       └── Projects_Physical_Tables ├── ... (1B through 10)
-                                                               └── 11_Decision_Records
+   ├── 01_Foundations             ├── 02_Core_Modules          ├── 03_Financial_Ledger
+   │   ├── README.md              │   ├── Core_Physical        │   ├── FINANCE_README.md
+   │   ├── Blueprint              │   ├── Auth_Physical        │   ├── 1_Chart_of_Accounts
+   │   └── Entity_Dictionary      │   ├── CRM_Physical         │   ├── 1A_Posting_Rules
+   └── 04_Ops_Standards           │   └── Projects_Physical    │   └── ... (1B through 13)
+       └── PostgreSQL_Standards   └── 05_Support_Desk          └── 14_Dev_Playbook
+                                      └── (15 Support Files)
 ```
 
 ### 3.1 Architectural Core Specifications
 
-#### Document: `/docs/database/README.md` (This Document)
+#### Document: `/docs/database/01_Foundations/README.md` (This Document)
 *   **Purpose**: The central navigation guide, directory index, and architectural constitution for the database repository.
 *   **Target Audience**: All engineers, architects, security auditors, and new contributors.
 *   **Dependencies**: None.
 *   **Status**: Active.
 
-#### Document: `/docs/database/Phase_2_Enterprise_Database_Blueprint.md`
+#### Document: `/docs/database/01_Foundations/Phase_2_Enterprise_Database_Blueprint.md`
 *   **Purpose**: High-level conceptual and logical database blueprint mapping multi-tenant SaaS domains.
 *   **Target Audience**: Solutions Architects, Database Administrators, Product Owners.
 *   **Dependencies**: `README.md`.
 *   **Status**: Active.
 
-#### Document: `/docs/database/Phase_2_2_Enterprise_Entity_Dictionary.md`
+#### Document: `/docs/database/01_Foundations/Phase_2_2_Enterprise_Entity_Dictionary.md`
 *   **Purpose**: Centralized dictionary of core data entities, defining keys, fields, and logical relationships.
 *   **Target Audience**: Backend Developers, Integration Engineers, Product Analysts.
 *   **Dependencies**: `Phase_2_Enterprise_Database_Blueprint.md`.
 *   **Status**: Active.
 
-#### Document: `/docs/database/Phase_2_3_1_PostgreSQL_Physical_Standards.md`
+#### Document: `/docs/database/04_Operations_Standards/Phase_2_3_1_PostgreSQL_Physical_Standards.md`
 *   **Purpose**: Establishes physical configuration rules, indexing profiles, and query optimization rules for PostgreSQL 16.
 *   **Target Audience**: Database Engineers, DevOps, Infrastructure Administrators.
 *   **Dependencies**: `Phase_2_Enterprise_Database_Blueprint.md`.
@@ -103,25 +105,25 @@ The documentation repository is organized into a modular tree structure. This hi
 
 ### 3.2 Subsystem Database Specifications
 
-#### Document: `/docs/database/Phase_2_3_2A_Core_Physical_Tables.md`
+#### Document: `/docs/database/02_Core_Modules/Phase_2_3_2A_Core_Physical_Tables.md`
 *   **Purpose**: Schema layouts and constraints for core multi-tenant schemas, including organizations, tenants, and regions.
 *   **Target Audience**: Backend Developers, Database Engineers.
 *   **Dependencies**: `Phase_2_3_1_PostgreSQL_Physical_Standards.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2B_Authentication_Physical_Tables.md`
+#### Document: `/docs/database/02_Core_Modules/Phase_2_3_2B_Authentication_Physical_Tables.md`
 *   **Purpose**: Physical table layouts, cryptographic keys, and token-tracking records for user security and auth.
 *   **Target Audience**: Security Engineers, Authentication Developers.
 *   **Dependencies**: `Phase_2_3_2A_Core_Physical_Tables.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2C_CRM_Physical_Tables.md`
+#### Document: `/docs/database/02_Core_Modules/Phase_2_3_2C_CRM_Physical_Tables.md`
 *   **Purpose**: Physical table structures for customer accounts, sales leads, contacts, and opportunities.
 *   **Target Audience**: CRM Developers, Integration Engineers.
 *   **Dependencies**: `Phase_2_3_2A_Core_Physical_Tables.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2D_Projects_Physical_Tables.md`
+#### Document: `/docs/database/02_Core_Modules/Phase_2_3_2D_Projects_Physical_Tables.md`
 *   **Purpose**: Schema layouts for tracking enterprise projects, tasks, resource assignments, and budgets.
 *   **Target Audience**: Project Managers, Backend Developers.
 *   **Dependencies**: `Phase_2_3_2A_Core_Physical_Tables.md`.
@@ -131,154 +133,248 @@ The documentation repository is organized into a modular tree structure. This hi
 
 ### 3.3 Finance Domain Specifications
 
-#### Document: `/docs/database/Phase_2_3_2E_FINANCE_README.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_FINANCE_README.md`
 *   **Purpose**: The central navigation guide and governance blueprint for the entire suite of Phase 2.3.2E Finance specifications.
 *   **Target Audience**: Finance Engineers, Group Controllers, Accountants, Backend Developers.
 *   **Dependencies**: `Phase_2_3_2A_Core_Physical_Tables.md`.
 *   **Status**: Active.
 
-#### Document: `/docs/database/Phase_2_3_2E_Finance_Physical_Tables.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_Finance_Physical_Tables.md`
 *   **Purpose**: Central physical schema definitions and layouts for General Ledger, subledgers, and invoice tables.
 *   **Target Audience**: Database Engineers, Backend Developers.
 *   **Dependencies**: `Phase_2_3_1_PostgreSQL_Physical_Standards.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_1_Chart_of_Accounts.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_1_Chart_of_Accounts.md`
 *   **Purpose**: Establishes structural accounting standards, indexing rules, and ledger numbering ranges.
 *   **Target Audience**: Corporate Accountants, General Ledger Engineers.
 *   **Dependencies**: `Phase_2_3_2E_Finance_Physical_Tables.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_1A_Enterprise_Posting_Rule_Engine.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_1A_Enterprise_Posting_Rule_Engine.md`
 *   **Purpose**: Rules and mappings governing the automation layer that translates business events into ledger entries.
 *   **Target Audience**: Backend Developers, Integration Engineers.
 *   **Dependencies**: `Phase_2_3_2E_1_Chart_of_Accounts.md`, `Phase_2_3_2E_5_Finance_Integration_and_Event_Contracts.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_1B_Financial_Dimensions_and_Cost_Allocation.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_1B_Financial_Dimensions_and_Cost_Allocation.md`
 *   **Purpose**: Governs dimension tracking, department/cost-center tags, and automated cost allocations.
 *   **Target Audience**: Finance Analysts, Database Architects.
 *   **Dependencies**: `Phase_2_3_2E_1_Chart_of_Accounts.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_1C_Accounting_Periods_and_Period_Close.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_1C_Accounting_Periods_and_Period_Close.md`
 *   **Purpose**: Defines accounting calendars, calendar status transitions, and year-end closing controls.
 *   **Target Audience**: General Ledger Accountants, Audit Compliance Officers.
 *   **Dependencies**: `Phase_2_3_2E_Finance_Physical_Tables.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_2_Invoicing_and_Billing.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_2_Invoicing_and_Billing.md`
 *   **Purpose**: Physical table configurations for invoices, contract billing records, and tax calculations.
 *   **Target Audience**: Billing Engineers, Tax Compliance Officers.
 *   **Dependencies**: `Phase_2_3_2E_Finance_Physical_Tables.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_2A_Invoice_Lifecycle_Engine.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_2A_Invoice_Lifecycle_Engine.md`
 *   **Purpose**: The state machine, validation rules, and event configurations that govern invoice document lifecycles.
 *   **Target Audience**: Backend Developers, Frontend Engineers.
 *   **Dependencies**: `Phase_2_3_2E_2_Invoicing_and_Billing.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_2B_Accounts_Receivable_and_Payment_Allocation.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_2B_Accounts_Receivable_and_Payment_Allocation.md`
 *   **Purpose**: Defines aging parameters, credit guidelines, and cash receipt matching workflows.
 *   **Target Audience**: Payment Processing Developers, AR Clerks.
 *   **Dependencies**: `Phase_2_3_2E_2A_Invoice_Lifecycle_Engine.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_2C_Revenue_Recognition_and_Deferred_Revenue.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_2C_Revenue_Recognition_and_Deferred_Revenue.md`
 *   **Purpose**: ASC 606 revenue recognition configurations, contract schedules, and deferred liability structures.
 *   **Target Audience**: Compliance Auditors, Ledger Accountants.
 *   **Dependencies**: `Phase_2_3_2E_2_Invoicing_and_Billing.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_3_General_Ledger_and_Journal_Processing_Engine.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_3_General_Ledger_and_Journal_Processing_Engine.md`
 *   **Purpose**: Governs manual ledger adjustments, entry approvals, balancing triggers, and ledger writes.
 *   **Target Audience**: Lead Ledger Accountants, Database Administrators.
 *   **Dependencies**: `Phase_2_3_2E_1_Chart_of_Accounts.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_3A_Banking_Cash_Management_and_Reconciliation.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_3A_Banking_Cash_Management_and_Reconciliation.md`
 *   **Purpose**: Governs statement imports, automatic transaction reconciliation, and cleared-cash states.
 *   **Target Audience**: Bank Integration Engineers, Cash Clerks.
 *   **Dependencies**: `Phase_2_3_2E_3_General_Ledger_...md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_4A_Financial_Reporting_Engine.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_4A_Financial_Reporting_Engine.md`
 *   **Purpose**: Governs report generation, Balance Sheet aggregation, and pre-computed materialized views.
 *   **Target Audience**: Reporting Developers, Frontend Engineers.
 *   **Dependencies**: `Phase_2_3_2E_3_General_Ledger_...md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_4B_Budgeting_Forecasting_and_Financial_Planning.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_4B_Budgeting_Forecasting_and_Financial_Planning.md`
 *   **Purpose**: Defines departmental cost-center budget limits, threshold constraints, and projections.
 *   **Target Audience**: Cost Managers, Financial Planners.
 *   **Dependencies**: `Phase_2_3_2E_1B_Financial_Dimensions_...md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_4C_Financial_Consolidation_and_Multi_Entity_Reporting.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_4C_Financial_Consolidation_and_Multi_Entity_Reporting.md`
 *   **Purpose**: Governs intercompany eliminations and IAS 21 currency translations across subsidiary groups.
 *   **Target Audience**: Group Financial Controllers, Multi-Region Accountants.
 *   **Dependencies**: `Phase_2_3_2E_3_General_Ledger_...md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_4D_Treasury_Cash_Forecasting_and_Financial_Risk_Management.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_4D_Treasury_Cash_Forecasting_and_Financial_Risk_Management.md`
 *   **Purpose**: Governs risk mitigation, compliance covenant limits, investment profiles, and sweeps.
 *   **Target Audience**: Corporate Treasurer, Risk Analysts.
 *   **Dependencies**: `Phase_2_3_2E_3A_Banking_Cash_Management_...md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_5_Finance_Integration_and_Event_Contracts.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_5_Finance_Integration_and_Event_Contracts.md`
 *   **Purpose**: Payload definitions, API boundaries, and transactional outbox event contracts.
 *   **Target Audience**: Integration Architects, Backend Developers.
 *   **Dependencies**: `Phase_2_3_2E_Finance_Physical_Tables.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_6_Finance_Default_Seed_Data.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_6_Finance_Default_Seed_Data.md`
 *   **Purpose**: Localized default Chart of Accounts, seed SQL lists, and automated configuration guides.
 *   **Target Audience**: Deployment Engineers, Provisioning Teams.
 *   **Dependencies**: `Phase_2_3_2E_1_Chart_of_Accounts.md`.
 *   **Status**: Implemented.
 
-#### Document: `/docs/database/Phase_2_3_2E_7_Finance_Architecture_Traceability_Matrix.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_7_Finance_Architecture_Traceability_Matrix.md`
 *   **Purpose**: Cross-reference mapping connecting requirements, physical tables, and regulatory controls.
 *   **Target Audience**: Solutions Architects, Security and Compliance Auditors.
 *   **Dependencies**: All preceding Phase 2.3.2E specifications.
 *   **Status**: Active.
 
-#### Document: `/docs/database/Phase_2_3_2E_8_Finance_Performance_and_Scalability.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_8_Finance_Performance_and_Scalability.md`
 *   **Purpose**: Design patterns for handling scale, table partitioning profiles, indexing guides, and vacuum rules.
 *   **Target Audience**: Database Administrators, Performance Engineers.
 *   **Dependencies**: `Phase_2_3_2E_Finance_Physical_Tables.md`.
 *   **Status**: Active.
 
-#### Document: `/docs/database/Phase_2_3_2E_9_Finance_Security_and_Compliance.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_9_Finance_Security_and_Compliance.md`
 *   **Purpose**: PostgreSQL RLS configurations, cryptographic column-level encryption keys, and administrative audits.
 *   **Target Audience**: Security Operations, Compliance Officers, Database Engineers.
 *   **Dependencies**: `Phase_2_3_2E_Finance_Physical_Tables.md`.
 *   **Status**: Active.
 
-#### Document: `/docs/database/Phase_2_3_2E_10_Finance_Testing_and_Validation.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_10_Finance_Testing_and_Validation.md`
 *   **Purpose**: Test plans, automated validation checks, and CI/CD validation gates.
 *   **Target Audience**: Quality Engineers, DevOps Team.
 *   **Dependencies**: All preceding Phase 2.3.2E specifications.
 *   **Status**: Active.
 
-#### Document: `/docs/database/Phase_2_3_2E_11_Finance_Architecture_Decision_Records.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_11_Finance_Architecture_Decision_Records.md`
 *   **Purpose**: Establishes a permanent log of core architecture decision records (ADRs), trade-offs, and reasoning.
 *   **Target Audience**: Future Architects, Developers, Security Auditors.
 *   **Dependencies**: All preceding Phase 2.3.2E specifications.
 *   **Status**: Active.
 
-#### Document: `/docs/database/Phase_2_3_2E_12_Finance_Database_Migration_Strategy.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_12_Finance_Database_Migration_Strategy.md`
 *   **Purpose**: Playbooks and strategies governing zero-downtime database upgrades, migrations, and rollbacks.
 *   **Target Audience**: Database Administrators, Release Managers, DevOps Engineers.
 *   **Dependencies**: All preceding Phase 2.3.2E specifications.
 *   **Status**: Active.
 
-#### Document: `/docs/database/Phase_2_3_2E_13_Finance_Implementation_Roadmap.md`
+#### Document: `/docs/database/03_Financial_Ledger/Phase_2_3_2E_13_Finance_Implementation_Roadmap.md`
 *   **Purpose**: The operational engineering sequence roadmap mapping out the development path from database schema to UI screens.
 *   **Target Audience**: Lead Developers, Project Managers, Full-Stack Engineers.
 *   **Dependencies**: All preceding Phase 2.3.2E specifications.
+*   **Status**: Active.
+
+---
+
+### 3.4 Support Desk Specifications
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_SUPPORT_README.md`
+*   **Purpose**: The central navigation guide and governance blueprint for the entire suite of Phase 2.3.2F Support Desk specifications.
+*   **Target Audience**: Support Managers, Database Administrators, Security Auditors, Backend Developers.
+*   **Dependencies**: `Phase_2_3_2A_Core_Physical_Tables.md`.
+*   **Status**: Active.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_Support_Physical_Tables.md`
+*   **Purpose**: Central physical schema definitions and layouts for Tickets, Messages, SLA instances, and Outbox logs.
+*   **Target Audience**: Database Engineers, Backend Developers.
+*   **Dependencies**: `Phase_2_3_1_PostgreSQL_Physical_Standards.md`.
+*   **Status**: Implemented.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_1_Ticket_Lifecycle_Engine.md`
+*   **Purpose**: Governs the ticket state machine, validating and logging every stage of a ticket from ingestion to resolution.
+*   **Target Audience**: Backend Developers, Frontend Engineers.
+*   **Dependencies**: `Phase_2_3_2F_Support_Physical_Tables.md`.
+*   **Status**: Implemented.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_2_SLA_and_Escalation_Engine.md`
+*   **Purpose**: Manages SLA target calculations, escalations, and regional timezone-aware business hour calendars.
+*   **Target Audience**: Support Managers, SLA Engineers.
+*   **Dependencies**: `Phase_2_3_2F_Support_Physical_Tables.md`.
+*   **Status**: Implemented.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_3_Knowledge_Base_Architecture.md`
+*   **Purpose**: Governs article authoring pipelines, multi-language translation schemas, and semantic search systems with pgvector.
+*   **Target Audience**: Technical Writers, Database Architects.
+*   **Dependencies**: `Phase_2_3_2F_Support_Physical_Tables.md`.
+*   **Status**: Implemented.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_4_Omnichannel_Communication_Engine.md`
+*   **Purpose**: Manages high-throughput message ingestion and routing across email, SMS, and WhatsApp.
+*   **Target Audience**: Integration Engineers, Message Operations.
+*   **Dependencies**: `Phase_2_3_2F_Support_Physical_Tables.md`.
+*   **Status**: Implemented.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_5_Customer_Satisfaction_and_Quality_Assurance.md`
+*   **Purpose**: Governs post-resolution customer satisfaction (CSAT) surveys and agent quality scorecard processes.
+*   **Target Audience**: QA Evaluators, Support Managers.
+*   **Dependencies**: `Phase_2_3_2F_Support_Physical_Tables.md`.
+*   **Status**: Implemented.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_6_AI_Copilot_and_Intelligent_Support_Assistance.md`
+*   **Purpose**: Governs AI-assisted agent features, such as suggested replies, ticket classification, and sentiment mapping.
+*   **Target Audience**: AI Platform Engineers, Support Agents.
+*   **Dependencies**: `Phase_2_3_2F_Support_Physical_Tables.md`.
+*   **Status**: Implemented.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_7_Support_Integration_and_Event_Contracts.md`
+*   **Purpose**: Payload definitions, API boundaries, webhook registries, and transactional outbox event contracts for Support.
+*   **Target Audience**: Integration Architects, Backend Developers.
+*   **Dependencies**: `Phase_2_3_2F_Support_Physical_Tables.md`.
+*   **Status**: Implemented.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_8_Support_Dashboards_and_Operational_Telemetry.md`
+*   **Purpose**: Governs the pre-computation and caching of operational dashboard data using Materialized Views.
+*   **Target Audience**: Frontend Engineers, Database Engineers.
+*   **Dependencies**: `Phase_2_3_2F_Support_Physical_Tables.md`.
+*   **Status**: Active.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_9_Support_Performance_and_Scalability.md`
+*   **Purpose**: Details database partitioning, index optimizations, and lock-mitigation strategies under high load.
+*   **Target Audience**: Database Administrators, Performance Engineers.
+*   **Dependencies**: `Phase_2_3_2F_Support_Physical_Tables.md`.
+*   **Status**: Active.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_10_Support_Security_and_Compliance.md`
+*   **Purpose**: Governs RLS access parameters, field-level encryption, and multi-tenant data isolation.
+*   **Target Audience**: Security Operations, Database Engineers.
+*   **Dependencies**: `Phase_2_3_2F_Support_Physical_Tables.md`.
+*   **Status**: Active.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_11_Support_Testing_and_Validation.md`
+*   **Purpose**: Test plans, automated pgTAP assertion validation suites, and CI/CD validation gates for Support.
+*   **Target Audience**: Quality Engineers, DevOps Team.
+*   **Dependencies**: All preceding Phase 2.3.2F specifications.
+*   **Status**: Active.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_12_Support_Architecture_Decision_Records.md`
+*   **Purpose**: Establishes a permanent log of core architecture decision records (ADRs), trade-offs, and reasoning.
+*   **Target Audience**: Future Architects, Developers, Security Auditors.
+*   **Dependencies**: All preceding Phase 2.3.2F specifications.
+*   **Status**: Active.
+
+#### Document: `/docs/database/05_Support_Desk/Phase_2_3_2F_13_Support_Implementation_Roadmap.md`
+*   **Purpose**: Operational engineering sequence roadmap mapping development from database schemas to UI screens.
+*   **Target Audience**: Lead Developers, Project Managers, Full-Stack Engineers.
+*   **Dependencies**: All preceding Phase 2.3.2F specifications.
 *   **Status**: Active.
 
 ---
@@ -416,6 +512,17 @@ The status dashboard tracks implementation progress across all functional module
 | **Banking Match** | `Phase_2_3_2E_3A_Banking_...md` | Complete | Complete | Complete | Complete | Complete |
 | **Consolidation** | `Phase_2_3_2E_4C_Financial_...md` | Complete | Complete | Complete | Complete | Complete |
 | **Treasury & Risk**| `Phase_2_3_2E_4D_Treasury_...md` | Complete | Complete | Complete | Complete | Complete |
+| **Support Tables** | `Phase_2_3_2F_Support_...md` | Complete | Complete | Complete | Complete | Complete |
+| **Ticket Lifecycle**| `Phase_2_3_2F_1_Ticket_...md` | Complete | Complete | Complete | Complete | Complete |
+| **SLA Escalation** | `Phase_2_3_2F_2_SLA_and_...md` | Complete | Complete | Complete | Complete | Complete |
+| **Knowledge Base** | `Phase_2_3_2F_3_Knowledge_...md` | Complete | Complete | Complete | Complete | Complete |
+| **Omnichannel Msg**| `Phase_2_3_2F_4_Omnichannel_...md`| Complete | Complete | Complete | Complete | Complete |
+| **QA Scorecard** | `Phase_2_3_2F_5_Customer_...md` | Complete | Complete | Complete | Complete | Complete |
+| **AI Support Copilot**| `Phase_2_3_2F_6_AI_Copilot_...md`| Complete | Complete | Complete | Complete | Complete |
+| **Event Outbox** | `Phase_2_3_2F_7_Support_...md` | Complete | Complete | Complete | Complete | Complete |
+| **Operational Telem**| `Phase_2_3_2F_8_Support_...md` | Complete | Complete | Complete | Complete | Complete |
+| **Performance Tuning**| `Phase_2_3_2F_9_Support_...md` | Complete | Complete | Complete | Complete | Complete |
+| **Security & RLS** | `Phase_2_3_2F_10_Support_...md` | Complete | Complete | Complete | Complete | Complete |
 
 ---
 
