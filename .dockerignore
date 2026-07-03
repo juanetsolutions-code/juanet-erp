@@ -1,0 +1,59 @@
+# Git & VCS
+.git
+.gitattributes
+.gitignore
+.github
+
+# IDEs, Editors & OS Metadata
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/
+*.md
+
+# Local Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Composer & Node Package Managers local dependencies
+node_modules/
+vendor/
+
+# Local Compiled Assets
+public/build/
+public/hot/
+mix-manifest.json
+
+# Laravel Runtime Caches & Local Logs
+storage/logs/*.log
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*.php
+storage/debugbar/
+bootstrap/cache/*.php
+.phpunit.result.cache
+
+# Docker Files and Local Configurations
+docker-compose.override.yml
+docker-compose.yml
+docker/
+
+# Temp Files & System Backups
+tmp/
+temp/
+.cache/
+*.zip
+*.tar
+*.gz
+*.sql
+*.sqlite
+*.bak

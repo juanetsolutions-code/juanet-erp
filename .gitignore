@@ -1,8 +1,162 @@
-node_modules/
-build/
-dist/
-coverage/
-.DS_Store
-*.log
-.env*
+# =============================================================================
+# JUANET Enterprise SaaS Platform - Git Ignore Specifications
+# Target: Laravel 12 / PHP 8.4 / Node.js & Vite / Docker Workspace Environment
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. CORE LARAVEL DEPENDENCIES & COMPILATION ARTIFACTS
+# -----------------------------------------------------------------------------
+/vendor/
+/node_modules/
+/public/build/
+/public/hot/
+/public/storage
+composer.phar
+vite.svg
+
+# -----------------------------------------------------------------------------
+# 2. LOCAL CONFIGURATIONS & CRYPTOGRAPHIC KEYS
+# -----------------------------------------------------------------------------
+.env
+.env.*
 !.env.example
+.env.backup
+.env.local
+.env.production.local
+.env.development.local
+.env.test.local
+/storage/*.key
+/storage/oauth-*.key
+
+# -----------------------------------------------------------------------------
+# 3. LARAVEL RUNTIME STORAGE & FRAMEWORK CACHES
+# -----------------------------------------------------------------------------
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/app/public/*
+/bootstrap/cache/*.php
+!.gitkeep
+
+# Exclude safety/placeholder files from ignore scope
+!/storage/logs/.gitkeep
+!/storage/framework/cache/.gitkeep
+!/storage/framework/sessions/.gitkeep
+!/storage/framework/views/.gitkeep
+!/storage/app/public/.gitkeep
+!/bootstrap/cache/.gitkeep
+
+# -----------------------------------------------------------------------------
+# 4. SYSTEM & APPLICATION LOGGING
+# -----------------------------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# -----------------------------------------------------------------------------
+# 5. TESTING, COVERAGE, QUALITY ASSURANCE & STATIC ANALYSIS
+# -----------------------------------------------------------------------------
+/.phpunit.cache/
+/coverage/
+/.php-cs-fixer.cache
+/.eslintcache
+/.stylelintcache
+.phpunit.result.cache
+
+# PHP-CS-Fixer, PHPStan, Psalm, and Phpactor Caches & Configs
+.php-cs-fixer.php
+.phpactor.json
+.phpactor/
+.phpstan.cache
+.phpstan/
+.psalm/
+.psalm-cache/
+
+# Package Manager Cache Engines
+.pnpm-store/
+.npm/
+.yarn/
+.yarn-cache/
+
+# -----------------------------------------------------------------------------
+# 6. CONTAINER & ORCHESTRATION WORKSPACES
+# -----------------------------------------------------------------------------
+docker-compose.override.yml
+*.pid
+*.kubeconfig
+
+# -----------------------------------------------------------------------------
+# 7. INTEGRATED DEVELOPMENT ENVIRONMENTS (IDEs) & EDITORS
+# -----------------------------------------------------------------------------
+# JetBrains (PhpStorm, WebStorm, etc.)
+.idea/
+*.iml
+*.iws
+
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+
+# Local edit history engines
+.history/
+
+# SublimeText / Atom / vim
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# -----------------------------------------------------------------------------
+# 8. OPERATING SYSTEM SPECIFIC METADATA
+# -----------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+desktop.ini
+$RECYCLE.BIN/
+
+# -----------------------------------------------------------------------------
+# 9. TEMPORARY & CACHED DIRECTORIES
+# -----------------------------------------------------------------------------
+.cache/
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# -----------------------------------------------------------------------------
+# 10. COMPRESSED ARCHIVES & EXPORTS
+# -----------------------------------------------------------------------------
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+*.sql
+*.sqlite
+*.sqlite-journal
+
+# -----------------------------------------------------------------------------
+# 11. INFRASTRUCTURE AS CODE (IaC - TERRAFORM)
+# -----------------------------------------------------------------------------
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+

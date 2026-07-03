@@ -1,0 +1,80 @@
+# =============================================================================
+# JUANET Enterprise SaaS Platform - Git Attributes Specification
+# Target: Multi-developer, Cross-platform Line-Ending Normalization & Diffing
+# =============================================================================
+
+# Define default line-ending behavior for all text files (normalize to LF on commit)
+* text=auto eol=lf
+
+# -----------------------------------------------------------------------------
+# 1. PROGRAMMING, SCRIPTING, & CONFIGURATION TEXT CHANNELS
+# -----------------------------------------------------------------------------
+*.php           text diff=php
+*.js            text
+*.ts            text
+*.jsx           text
+*.tsx           text
+*.html          text
+*.css           text
+*.scss          text
+*.json          text
+*.xml           text
+*.sql           text
+*.sh            text eol=lf
+*.yml           text
+*.yaml          text
+*.md            text
+*.env*          text
+Dockerfile      text
+*.dockerfile    text
+.editorconfig   text
+.gitignore      text
+.gitattributes  text
+
+# -----------------------------------------------------------------------------
+# 2. STRICT BINARY HANDLING (Prevent accidental line ending corruption)
+# -----------------------------------------------------------------------------
+# Images & Graphics
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.webp          binary
+*.ico           binary
+*.svg           text
+
+# Documents & Archives
+*.pdf           binary
+*.zip           binary
+*.gz            binary
+*.7z            binary
+*.tar           binary
+
+# Web & Desktop Typography (Fonts)
+*.woff          binary
+*.woff2         binary
+*.ttf           binary
+*.eot           binary
+*.otf           binary
+
+# Video & Multimedia Audio Assets
+*.mp4           binary
+*.mov           binary
+*.avi           binary
+*.mp3           binary
+*.wav           binary
+
+# -----------------------------------------------------------------------------
+# 3. GITHUB LINGUIST & REPOSITORY REPORTING OPTIMIZATIONS
+# -----------------------------------------------------------------------------
+# Hide pre-compiled, vendor, or minified files from pull request diffs and repository statistics
+/vendor/**                  linguist-vendored
+/node_modules/**            linguist-vendored
+/public/build/**            linguist-generated
+/public/hot/**              linguist-generated
+package-lock.json           linguist-generated
+composer.lock               linguist-generated
+.phpunit.result.cache       linguist-generated
+
+# Explicitly mark documentation directories
+/docs/**                    linguist-documentation
