@@ -18,8 +18,32 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return redirect()->route('login');
+    return view('welcome');
 });
+
+Route::get('/services', function () {
+    return view('services');
+})->name('services');
+
+Route::get('/marketplace', function () {
+    return view('marketplace');
+})->name('marketplace');
+
+Route::get('/portfolio', function () {
+    return view('portfolio');
+})->name('portfolio');
+
+Route::get('/blog', function () {
+    return view('blog');
+})->name('blog');
+
+Route::get('/contact', function () {
+    return view('contact');
+})->name('contact');
+
+Route::get('/quote-request', function () {
+    return view('quote-request');
+})->name('quote-request');
 
 Route::get('/health', function () {
     return response()->json([

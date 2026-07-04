@@ -68,10 +68,83 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/organizations/{id}/invite', [OrganizationController::class, 'invite']);
 
         // CRM Domain API Resources
+        Route::prefix('crm/leads')->group(function () {
+            Route::post('/bulk-update', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'bulkUpdate']);
+            Route::post('/bulk-delete', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'bulkDelete']);
+            Route::post('/bulk-assign', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'bulkAssign']);
+            Route::post('/bulk-archive', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'bulkArchive']);
+            Route::post('/bulk-restore', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'bulkRestore']);
+            Route::post('/bulk-tag', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'bulkTag']);
+            Route::get('/export', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'export']);
+            Route::post('/import', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'import']);
+            Route::post('/rollback', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'rollback']);
+
+            Route::post('/{id}/transition', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'transition']);
+            Route::post('/{id}/assign', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'assign']);
+            Route::post('/{id}/convert', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'convert']);
+            Route::get('/{id}/timeline', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'timeline']);
+            Route::get('/{id}/duplicates', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'duplicates']);
+            Route::post('/{id}/merge', [\App\Domain\CRM\Controllers\Api\LeadApiController::class, 'merge']);
+        });
+
         Route::apiResource('crm/leads', \App\Domain\CRM\Controllers\Api\LeadApiController::class);
+
+        // CRM Contacts Extensions
+        Route::prefix('crm/contacts')->group(function () {
+            Route::post('/bulk-update', [\App\Domain\CRM\Controllers\Api\ContactApiController::class, 'bulkUpdate']);
+            Route::post('/bulk-tag', [\App\Domain\CRM\Controllers\Api\ContactApiController::class, 'bulkTag']);
+            Route::post('/bulk-archive', [\App\Domain\CRM\Controllers\Api\ContactApiController::class, 'bulkArchive']);
+            Route::post('/{id}/recalculate-health', [\App\Domain\CRM\Controllers\Api\ContactApiController::class, 'recalculateHealth']);
+            Route::get('/{id}/timeline', [\App\Domain\CRM\Controllers\Api\ContactApiController::class, 'timeline']);
+            Route::post('/{id}/companies', [\App\Domain\CRM\Controllers\Api\ContactApiController::class, 'storeCompanyAssociation']);
+            Route::delete('/{id}/companies/{company_id}', [\App\Domain\CRM\Controllers\Api\ContactApiController::class, 'destroyCompanyAssociation']);
+            Route::post('/{id}/methods', [\App\Domain\CRM\Controllers\Api\ContactApiController::class, 'storeMethod']);
+            Route::put('/{id}/methods/{method_id}', [\App\Domain\CRM\Controllers\Api\ContactApiController::class, 'updateMethod']);
+            Route::delete('/{id}/methods/{method_id}', [\App\Domain\CRM\Controllers\Api\ContactApiController::class, 'destroyMethod']);
+            Route::post('/{id}/relationships', [\App\Domain\CRM\Controllers\Api\ContactApiController::class, 'storeRelationship']);
+            Route::put('/{id}/relationships/{relationship_id}', [\App\Domain\CRM\Controllers\Api\ContactApiController::class, 'updateRelationship']);
+            Route::delete('/{id}/relationships/{relationship_id}', [\App\Domain\CRM\Controllers\Api\ContactApiController::class, 'destroyRelationship']);
+        });
         Route::apiResource('crm/contacts', \App\Domain\CRM\Controllers\Api\ContactApiController::class);
+
+        // CRM Companies Enterprise Extensions
+        Route::prefix('crm/companies')->group(function () {
+            Route::post('/{id}/recalculate-health', [\App\Domain\CRM\Controllers\Api\CompanyApiController::class, 'recalculateHealth']);
+            Route::get('/{id}/hierarchy', [\App\Domain\CRM\Controllers\Api\CompanyApiController::class, 'hierarchy']);
+            Route::get('/{id}/locations', [\App\Domain\CRM\Controllers\Api\CompanyApiController::class, 'getLocations']);
+            Route::post('/{id}/locations', [\App\Domain\CRM\Controllers\Api\CompanyApiController::class, 'storeLocation']);
+            Route::put('/{id}/locations/{location_id}', [\App\Domain\CRM\Controllers\Api\CompanyApiController::class, 'updateLocation']);
+            Route::delete('/{id}/locations/{location_id}', [\App\Domain\CRM\Controllers\Api\CompanyApiController::class, 'destroyLocation']);
+        });
         Route::apiResource('crm/companies', \App\Domain\CRM\Controllers\Api\CompanyApiController::class);
+        
+        Route::prefix('crm/opportunities')->group(function () {
+            Route::post('/bulk-update', [\App\Domain\CRM\Controllers\Api\OpportunityApiController::class, 'bulkUpdate']);
+            Route::post('/bulk-assign', [\App\Domain\CRM\Controllers\Api\OpportunityApiController::class, 'bulkAssign']);
+            Route::post('/bulk-move-stage', [\App\Domain\CRM\Controllers\Api\OpportunityApiController::class, 'bulkMoveStage']);
+            
+            Route::get('/{id}/products', [\App\Domain\CRM\Controllers\Api\OpportunityApiController::class, 'indexProducts']);
+            Route::post('/{id}/products', [\App\Domain\CRM\Controllers\Api\OpportunityApiController::class, 'storeProduct']);
+            Route::put('/{id}/products/{productId}', [\App\Domain\CRM\Controllers\Api\OpportunityApiController::class, 'updateProduct']);
+            Route::delete('/{id}/products/{productId}', [\App\Domain\CRM\Controllers\Api\OpportunityApiController::class, 'destroyProduct']);
+        });
         Route::apiResource('crm/opportunities', \App\Domain\CRM\Controllers\Api\OpportunityApiController::class);
+
+        // CRM Activities, Timeline & Notes API
+        Route::prefix('crm/activities')->group(function () {
+            Route::post('/bulk-complete', [\App\Domain\CRM\Controllers\Api\ActivityApiController::class, 'bulkComplete']);
+            Route::post('/bulk-update', [\App\Domain\CRM\Controllers\Api\ActivityApiController::class, 'bulkUpdate']);
+            Route::get('/timeline', [\App\Domain\CRM\Controllers\Api\ActivityApiController::class, 'timeline']);
+            
+            Route::post('/notes', [\App\Domain\CRM\Controllers\Api\ActivityApiController::class, 'storeNote']);
+            Route::put('/notes/{id}', [\App\Domain\CRM\Controllers\Api\ActivityApiController::class, 'updateNote']);
+            Route::delete('/notes/{id}', [\App\Domain\CRM\Controllers\Api\ActivityApiController::class, 'destroyNote']);
+            
+            Route::post('/{activityId}/attachments', [\App\Domain\CRM\Controllers\Api\ActivityApiController::class, 'storeAttachment']);
+            Route::post('/{activityId}/reminders', [\App\Domain\CRM\Controllers\Api\ActivityApiController::class, 'storeReminder']);
+            Route::post('/{id}/complete', [\App\Domain\CRM\Controllers\Api\ActivityApiController::class, 'complete']);
+        });
+        Route::apiResource('crm/activities', \App\Domain\CRM\Controllers\Api\ActivityApiController::class);
     });
 });
 
@@ -106,6 +179,10 @@ Route::prefix('leads')->group(function () {
         ], 201);
     });
 });
+
+// Public Lead Capture API (unauthenticated, rate limited, tenant aware)
+Route::post('/public/leads', [\App\Http\Controllers\Api\PublicLeadController::class, 'store'])
+    ->middleware(['throttle:10,1', 'tenant']);
 
 // Signed temporary file download endpoint (public via HMAC check)
 Route::get('/files/{id}/download-signed', [FileController::class, 'downloadSigned'])->name('api.files.download-signed');

@@ -64,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Services\EventBus\EventDispatcherInterface::class, \App\Services\EventBus\EventDispatcher::class);
         $this->app->bind(\App\Services\EventBus\OutboxConsumerInterface::class, \App\Services\EventBus\OutboxConsumer::class);
         $this->app->bind(\App\Services\EventBus\OutboxPublisherInterface::class, \App\Services\EventBus\OutboxPublisher::class);
+        $this->app->singleton(\App\Contracts\EventBus::class, \App\Infrastructure\Events\LaravelEventBus::class);
 
         // Bind Enterprise Cache Infrastructure Services
         $this->app->singleton(\App\Services\Cache\CacheServiceInterface::class, \App\Services\Cache\CacheService::class);
@@ -86,6 +87,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Domain\CRM\Contracts\CompanyRepositoryInterface::class, \App\Domain\CRM\Repositories\CompanyRepository::class);
         $this->app->bind(\App\Domain\CRM\Contracts\PipelineRepositoryInterface::class, \App\Domain\CRM\Repositories\PipelineRepository::class);
         $this->app->bind(\App\Domain\CRM\Contracts\OpportunityRepositoryInterface::class, \App\Domain\CRM\Repositories\OpportunityRepository::class);
+
+        // Bind Shared Kernel Money Value Object Formatter
+        $this->app->bind(\App\Domain\Shared\Contracts\MoneyFormatter::class, \App\Domain\Shared\Services\LocaleMoneyFormatter::class);
     }
 
     /**
@@ -100,6 +104,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Register Auth events subscriber
         \Illuminate\Support\Facades\Event::subscribe(\App\Listeners\AuthEventListener::class);
+
+        // Register CRM events subscriber
+        \Illuminate\Support\Facades\Event::subscribe(\App\Listeners\CrmDomainEventSubscriber::class);
 
         // Register Model Observers
         \App\Models\StoredFile::observe(\App\Observers\StoredFileObserver::class);

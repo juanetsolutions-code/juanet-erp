@@ -4,23 +4,23 @@ namespace App\Domain\CRM\Observers;
 
 use App\Domain\CRM\Models\Pipeline;
 use App\Domain\CRM\Events\PipelineUpdatedEvent;
-use App\Services\EventBus\TransactionalOutboxInterface;
+use App\Contracts\EventBus;
 use App\Services\Cache\TenantCacheManagerInterface;
 
 class PipelineObserver
 {
-    protected TransactionalOutboxInterface $outbox;
+    protected EventBus $eventBus;
     protected TenantCacheManagerInterface $cache;
 
-    public function __construct(TransactionalOutboxInterface $outbox, TenantCacheManagerInterface $cache)
+    public function __construct(EventBus $eventBus, TenantCacheManagerInterface $cache)
     {
-        $this->outbox = $outbox;
+        $this->eventBus = $eventBus;
         $this->cache = $cache;
     }
 
     public function updated(Pipeline $pipeline): void
     {
-        $this->outbox->store(new PipelineUpdatedEvent($pipeline));
+        $this->eventBus->dispatch(new PipelineUpdatedEvent($pipeline));
         $this->invalidateCache($pipeline);
     }
 

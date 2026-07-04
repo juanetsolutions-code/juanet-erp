@@ -54,7 +54,16 @@ import {
   Download,
   Tag,
   FileText,
-  UserCheck
+  UserCheck,
+  Phone,
+  Video,
+  Calendar,
+  Filter,
+  Search,
+  Paperclip,
+  History,
+  MessageCircle,
+  X
 } from "lucide-react";
 
 import {
@@ -185,6 +194,7 @@ We show how the application of clean RLS policies tied to JWT auth claims simpli
             <SidebarButton active={activeTab === "database"} icon={<Database size={16} />} label="DB Schema & ERD (34)" onClick={() => setActiveTab("database")} />
             <SidebarButton active={activeTab === "api"} icon={<Code size={16} />} label="Express API Router" onClick={() => setActiveTab("api")} />
             <SidebarButton active={activeTab === "auth"} icon={<Lock size={16} />} label="RBAC Staff Security" onClick={() => setActiveTab("auth")} />
+            <SidebarButton active={activeTab === "crm"} icon={<Activity size={16} />} label="CRM Activities & Timeline" onClick={() => setActiveTab("crm")} />
             <SidebarButton active={activeTab === "messaging"} icon={<MessageSquare size={16} />} label="Messaging & File Vault" onClick={() => setActiveTab("messaging")} />
             <SidebarButton active={activeTab === "payments"} icon={<CreditCard size={16} />} label="Enterprise Payments Hub" onClick={() => setActiveTab("payments")} />
             <SidebarButton active={activeTab === "blog"} icon={<BookOpen size={16} />} label="SEO Blog CMS" onClick={() => setActiveTab("blog")} />
@@ -233,6 +243,7 @@ We show how the application of clean RLS policies tied to JWT auth claims simpli
               {activeTab === "database" && <DatabaseTab copiedText={copiedText} handleCopy={handleCopy} />}
               {activeTab === "api" && <ApiTab copiedText={copiedText} handleCopy={handleCopy} />}
               {activeTab === "auth" && <AuthTab />}
+              {activeTab === "crm" && <CrmActivitiesTab />}
               {activeTab === "messaging" && (
                 <MessagingTab
                   projectFiles={projectFiles}
@@ -3359,6 +3370,2532 @@ function BlogTab({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function CrmActivitiesTab() {
+  const [activeTab, setActiveTab] = useState<string>("timeline");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+
+  // Enterprise Contacts State & Wizards
+  const [contactViewMode, setContactViewMode] = useState<string>("directory"); // directory, profile, merge, import
+  const [selectedContactId, setSelectedContactId] = useState<string>("CONT-001");
+  const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
+  
+  // Filtering for contacts
+  const [tierFilter, setTierFilter] = useState<string>("all");
+  const [segmentFilter, setSegmentFilter] = useState<string>("all");
+  const [lifecycleFilter, setLifecycleFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [healthFilter, setHealthFilter] = useState<string>("all");
+
+  // Outbox list specifically for showing our strongly typed events
+  const [outboxEvents, setOutboxEvents] = useState<any[]>([
+    { id: "EVT-1", name: "crm.contact.created", type: "queued", ts: "10 mins ago", target: "Caleb Kirui" },
+    { id: "EVT-2", name: "crm.contact.health_changed", type: "queued", ts: "Just now", target: "Mary Kamau" }
+  ]);
+
+  const triggerEventLog = (eventName: string, targetName: string) => {
+    setOutboxEvents(prev => [
+      { id: "EVT-" + Date.now(), name: eventName, type: "queued", ts: "Just now", target: targetName },
+      ...prev
+    ]);
+  };
+
+  // Contacts dataset
+  const [contacts, setContacts] = useState<any[]>([
+    {
+      id: "CONT-001",
+      first_name: "Caleb",
+      middle_name: "Kip",
+      last_name: "Kirui",
+      preferred_name: "Caleb",
+      email: "caleb@telecom.co.ke",
+      personal_email: "caleb.kirui@gmail.com",
+      assistant_email: "assistant.caleb@telecom.co.ke",
+      phone: "+254 700 111222",
+      work_phone: "+254 20 555666",
+      mobile_phone: "+254 700 111222",
+      home_phone: "",
+      assistant_phone: "+254 700 999888",
+      fax: "",
+      whatsapp: "+254 700 111222",
+      telegram: "@caleb_kirui",
+      signal: "@caleb.k",
+      job_title: "VP of Enterprise Cloud Infrastructure",
+      department: "Information Technology",
+      company_id: "COMP-003",
+      company_name: "Acme Kenya Operations",
+      user_id: "USER-99", // owner
+      manager_id: null,
+      gender: "Male",
+      nationality: "Kenyan",
+      languages: ["English", "Swahili"],
+      notes: "Caleb is highly interested in the multi-tenant PostgreSQL security setup.",
+      buying_role: "Decision Maker",
+      is_decision_maker: true,
+      is_influencer: false,
+      is_technical_contact: true,
+      tier: "Tier A",
+      segment: "Enterprise",
+      lifecycle_stage: "SQL",
+      classification: "High Touch",
+      status: "Active",
+      sms_consent: true,
+      whatsapp_consent: true,
+      email_consent: true,
+      do_not_call: false,
+      do_not_email: false,
+      do_not_sms: false,
+      gdpr_consent_status: "granted",
+      health_score: 85,
+      health_status: "Healthy",
+      health_breakdown: { engagement: 15, responsiveness: 10, meeting_frequency: 15, sales_influence: 15, relationship_strength: 10, profile_completeness: 20 },
+      custom_fields: { tenant_sector: "Finance", priority_level: "High", trial_extended_until: "2026-12-31" },
+      addresses: [
+        { id: "ADDR-1", type: "primary", is_primary: true, street: "Galana Rd, Kilimani", city: "Nairobi", country: "Kenya", timezone: "Africa/Nairobi" },
+        { id: "ADDR-2", type: "billing", is_primary: false, street: "Waiyaki Way, Westlands", city: "Nairobi", country: "Kenya", timezone: "Africa/Nairobi" }
+      ],
+      consents: [
+        { id: "CONS-1", channel: "email", status: "granted", purpose: "marketing", consented_at: "2026-06-15", source: "webform" },
+        { id: "CONS-2", channel: "whatsapp", status: "granted", purpose: "support", consented_at: "2026-06-16", source: "agent" }
+      ],
+      relationships: [
+        { id: "REL-1", related_contact_id: "CONT-002", type: "colleague" }
+      ]
+    },
+    {
+      id: "CONT-002",
+      first_name: "Mary",
+      middle_name: "",
+      last_name: "Kamau",
+      preferred_name: "Mary",
+      email: "mary@telecom.co.ke",
+      personal_email: "",
+      assistant_email: "",
+      phone: "+254 711 000222",
+      work_phone: "+254 711 000222",
+      mobile_phone: "",
+      home_phone: "",
+      assistant_phone: "",
+      fax: "",
+      whatsapp: "",
+      telegram: "",
+      signal: "",
+      job_title: "Head of Infrastructure Projects",
+      department: "Procurement & Telecoms",
+      company_id: "COMP-004",
+      company_name: "Safaricom PLC",
+      user_id: "USER-99",
+      manager_id: "CONT-001",
+      gender: "Female",
+      nationality: "Kenyan",
+      languages: ["English"],
+      notes: "Needs fiber survey and complex cabling quote.",
+      buying_role: "Influencer",
+      is_decision_maker: false,
+      is_influencer: true,
+      is_technical_contact: false,
+      tier: "Tier B",
+      segment: "Enterprise",
+      lifecycle_stage: "MQL",
+      classification: "Mid Touch",
+      status: "Active",
+      sms_consent: false,
+      whatsapp_consent: false,
+      email_consent: true,
+      do_not_call: false,
+      do_not_email: false,
+      do_not_sms: true,
+      gdpr_consent_status: "granted",
+      health_score: 72,
+      health_status: "Warning",
+      health_breakdown: { engagement: 10, responsiveness: 10, meeting_frequency: 10, sales_influence: 10, relationship_strength: 12, profile_completeness: 15 },
+      custom_fields: { secondary_lead_source: "Direct Call" },
+      addresses: [
+        { id: "ADDR-3", type: "office", is_primary: true, street: "Safaricom House, Waiyaki Way", city: "Nairobi", country: "Kenya", timezone: "Africa/Nairobi" }
+      ],
+      consents: [
+        { id: "CONS-3", channel: "email", status: "granted", purpose: "marketing", consented_at: "2026-06-20", source: "webform" }
+      ],
+      relationships: []
+    },
+    {
+      id: "CONT-003",
+      first_name: "Caleb (Duplicate)",
+      middle_name: "K.",
+      last_name: "Kirui",
+      preferred_name: "Caleb",
+      email: "caleb@telecom.co.ke", // matching email
+      personal_email: "",
+      assistant_email: "",
+      phone: "+254 700 111222", // matching phone
+      work_phone: "",
+      mobile_phone: "",
+      home_phone: "",
+      assistant_phone: "",
+      fax: "",
+      whatsapp: "",
+      telegram: "",
+      signal: "",
+      job_title: "VP Enterprise Cloud",
+      department: "IT",
+      company_id: "COMP-003",
+      company_name: "Acme Kenya Operations",
+      user_id: "USER-99",
+      manager_id: null,
+      gender: "Male",
+      nationality: "Kenyan",
+      languages: [],
+      notes: "Alternate registration card found.",
+      buying_role: "Decision Maker",
+      is_decision_maker: true,
+      is_influencer: false,
+      is_technical_contact: true,
+      tier: "Tier C",
+      segment: "SMB",
+      lifecycle_stage: "Lead",
+      classification: "Tech Touch",
+      status: "Active",
+      sms_consent: false,
+      whatsapp_consent: false,
+      email_consent: false,
+      do_not_call: false,
+      do_not_email: false,
+      do_not_sms: false,
+      gdpr_consent_status: "not_asked",
+      health_score: 42,
+      health_status: "Critical",
+      health_breakdown: { engagement: 5, responsiveness: 2, meeting_frequency: 5, sales_influence: 5, relationship_strength: 5, profile_completeness: 5 },
+      custom_fields: {},
+      addresses: [],
+      consents: [],
+      relationships: []
+    }
+  ]);
+
+  // Companies list mock state for the interactive visualizer
+  const [companies, setCompanies] = useState<any[]>([
+    {
+      id: "COMP-001",
+      name: "Acme Global Holdings",
+      trading_name: "Acme Group",
+      domain: "acme-group.com",
+      status: "Customer",
+      parent_id: null,
+      registration_number: "REG-992019-X",
+      tax_number: "TAX-GB-11202",
+      company_size: "enterprise",
+      industry_classification: "Information Technology",
+      annual_revenue: "KES 500,000,000",
+      employees_count: 1200,
+      phone: "+44 20 7946 0958",
+      website: "https://acme-group.com",
+      address: "100 Wood St, London, UK",
+      preferred_language: "English",
+      currency: "GBP",
+      health_score: 95,
+      health_status: "Healthy",
+      health_breakdown: { engagement: 15, opportunities: 20, outstanding_tasks: 0 },
+      locations: [
+        { id: "LOC-1", type: "headquarters", name: "Acme London HQ", city: "London", country: "United Kingdom" }
+      ]
+    },
+    {
+      id: "COMP-002",
+      name: "Acme EMEA Ltd",
+      trading_name: "Acme EMEA",
+      domain: "acme-emea.io",
+      status: "Customer",
+      parent_id: "COMP-001",
+      registration_number: "REG-EMEA-4412",
+      tax_number: "TAX-NL-88219",
+      company_size: "mid_market",
+      industry_classification: "Telecommunications",
+      annual_revenue: "KES 150,000,000",
+      employees_count: 350,
+      phone: "+31 20 7946 1122",
+      website: "https://acme-emea.io",
+      address: "Keizersgracht 424, Amsterdam, Netherlands",
+      preferred_language: "English",
+      currency: "EUR",
+      health_score: 82,
+      health_status: "Healthy",
+      health_breakdown: { engagement: 12, opportunities: 20, outstanding_tasks: 0 },
+      locations: [
+        { id: "LOC-2", type: "branch", name: "Amsterdam Office", city: "Amsterdam", country: "Netherlands" },
+        { id: "LOC-3", type: "warehouse", name: "Rotterdam Depot", city: "Rotterdam", country: "Netherlands" }
+      ]
+    },
+    {
+      id: "COMP-003",
+      name: "Acme Kenya Operations",
+      trading_name: "Acme Kenya",
+      domain: "acme.co.ke",
+      status: "Prospect",
+      parent_id: "COMP-002",
+      registration_number: "REG-KE-9018",
+      tax_number: "TAX-KE-009211",
+      company_size: "mid_market",
+      industry_classification: "Financial Services",
+      annual_revenue: "KES 45,000,000",
+      employees_count: 80,
+      phone: "+254 20 1234567",
+      website: "https://acme.co.ke",
+      address: "Galana Plaza, Galana Rd, Nairobi, Kenya",
+      preferred_language: "Swahili",
+      currency: "KES",
+      health_score: 48,
+      health_status: "Critical",
+      health_breakdown: { engagement: 3, opportunities: 5, outstanding_tasks: -30 },
+      locations: [
+        { id: "LOC-4", type: "branch", name: "Nairobi Office", city: "Nairobi", country: "Kenya" },
+        { id: "LOC-5", type: "billing", name: "Acme Kenya Billing", city: "Nairobi", country: "Kenya" }
+      ]
+    },
+    {
+      id: "COMP-004",
+      name: "Safaricom PLC",
+      trading_name: "Safaricom",
+      domain: "safaricom.co.ke",
+      status: "Customer",
+      parent_id: null,
+      registration_number: "REG-SAF-001",
+      tax_number: "P000129381M",
+      company_size: "enterprise",
+      industry_classification: "Telecommunications",
+      annual_revenue: "KES 310,000,000,000",
+      employees_count: 6500,
+      phone: "+254 711 000000",
+      website: "https://safaricom.co.ke",
+      address: "Safaricom House, Waiyaki Way, Nairobi, Kenya",
+      preferred_language: "English",
+      currency: "KES",
+      health_score: 92,
+      health_status: "Healthy",
+      health_breakdown: { engagement: 15, opportunities: 20, outstanding_tasks: 0 },
+      locations: [
+        { id: "LOC-6", type: "headquarters", name: "HQ Waiyaki Way", city: "Nairobi", country: "Kenya" },
+        { id: "LOC-7", type: "branch", name: "Mombasa Office", city: "Mombasa", country: "Kenya" }
+      ]
+    }
+  ]);
+
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("COMP-003");
+  const [newLocType, setNewLocType] = useState<string>("branch");
+  const [newLocName, setNewLocName] = useState<string>("");
+  const [newLocCity, setNewLocCity] = useState<string>("");
+  const [newLocCountry, setNewLocCountry] = useState<string>("");
+
+  const activeCompany = companies.find(c => c.id === selectedCompanyId) || companies[0];
+  
+  // Real-time interactive state
+  const [activities, setActivities] = useState<any[]>([
+    {
+      id: "ACT-001",
+      type: "phone_call",
+      subject: "Cold Discovery Call — Caleb Kirui",
+      description: "Discussed multi-tenant postgres requirement and scaling infrastructure. Caleb is highly interested in the KES 650K annual SaaS tier.",
+      is_completed: true,
+      completed_at: "2 hours ago",
+      due_at: "Completed today",
+      priority: "high",
+      user_name: "Juan (Admin)",
+      attachments: [],
+      notes: [
+        { id: "N-1", version: 1, content: "Initial interest logged. Follow up with system blueprints.", user: "Juan (Admin)", date: "2 hrs ago" }
+      ],
+      created_at: "2 hours ago"
+    },
+    {
+      id: "ACT-002",
+      type: "meeting",
+      subject: "Demo & Contract Proposal Scoping",
+      description: "Presenting ERD layouts, Safaricom Daraja Webhooks callback architecture, and billing models.",
+      is_completed: false,
+      due_at: "In 3 hours",
+      priority: "high",
+      user_name: "Mary Kamau",
+      attachments: [
+        { name: "system_architecture_spec.pdf", size: "2.4 MB" }
+      ],
+      notes: [],
+      created_at: "3 hours ago"
+    },
+    {
+      id: "ACT-003",
+      type: "follow_up_task",
+      subject: "Deploy staging test routes for Lipa Na M-PESA",
+      description: "Verify Daraja async signature validation under stress test script.",
+      is_completed: false,
+      due_at: "Yesterday (OVERDUE)",
+      priority: "high",
+      user_name: "Juan (Admin)",
+      attachments: [],
+      notes: [],
+      created_at: "1 day ago"
+    },
+    {
+      id: "ACT-004",
+      type: "internal_note",
+      subject: "Security Audit Checklist Added",
+      description: "Verified composite key constraints on CheckoutRequestID. Prevented duplication of payment registers.",
+      is_completed: true,
+      completed_at: "Yesterday",
+      due_at: "Completed",
+      priority: "medium",
+      user_name: "Caleb Kirui",
+      attachments: [],
+      notes: [],
+      created_at: "1 day ago"
+    },
+    {
+      id: "ACT-005",
+      type: "appt",
+      subject: "Staging Server Provision Check",
+      description: "Ensure Caddy and Docker networks are locked behind the custom auth roles.",
+      is_completed: false,
+      due_at: "In 3 days",
+      priority: "low",
+      user_name: "Mary Kamau",
+      attachments: [],
+      notes: [],
+      created_at: "2 days ago"
+    }
+  ]);
+
+  // Notes state for Version manager
+  const [selectedNote, setSelectedNote] = useState<any>({
+    id: "NOTE-MAIN",
+    notable_type: "Lead",
+    notable_id: "REQ-001",
+    content: "### Caleb Kirui Project Requirements\n\n- Scale the multi-tenant architecture\n- Implement Safaricom payments verification\n- Enforce staff roles & permissions checking",
+    version: 2,
+    original_note_id: null,
+    user: "Juan (Admin)",
+    updated_at: "Just now",
+    history: [
+      { version: 1, content: "Caleb project: simple Postgres scale check", user: "Juan (Admin)", date: "1 day ago" }
+    ],
+    replies: [
+      { id: "rep-1", author: "Mary Kamau", text: "Checked. The RLS policies look correct.", date: "4 hours ago" }
+    ]
+  });
+
+  // Reminders list
+  const [reminders, setReminders] = useState<any[]>([
+    { id: "REM-1", title: "Demo prep for Caleb Kirui", remind_at: "10 mins before", method: "in_app", status: "Active" },
+    { id: "REM-2", title: "Follow up with MPESA callback staging", remind_at: "Every day at 9:00 AM", method: "email", status: "Active" }
+  ]);
+
+  // Form states for adding activities
+  const [newType, setNewType] = useState<string>("phone_call");
+  const [newSubject, setNewSubject] = useState<string>("");
+  const [newDesc, setNewDesc] = useState<string>("");
+  const [newPriority, setNewPriority] = useState<string>("medium");
+  const [newDue, setNewDue] = useState<string>("");
+  const [newAssignee, setNewAssignee] = useState<string>("Juan (Admin)");
+
+  // Form state for Note editor
+  const [noteEditContent, setNoteEditContent] = useState<string>(selectedNote.content);
+  const [newReplyText, setNewReplyText] = useState<string>("");
+
+  // Form state for new Reminder
+  const [remindTitle, setRemindTitle] = useState<string>("");
+  const [remindTime, setRemindTime] = useState<string>("");
+  const [remindMethod, setRemindMethod] = useState<string>("in_app");
+
+  // Selection states for bulk actions
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Toggle selection
+  const handleSelectId = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  // Select all
+  const handleSelectAll = () => {
+    if (selectedIds.length === activities.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(activities.map(a => a.id));
+    }
+  };
+
+  // Bulk complete
+  const handleBulkComplete = () => {
+    setActivities(prev => prev.map(a => 
+      selectedIds.includes(a.id) ? { ...a, is_completed: true, completed_at: "Just now" } : a
+    ));
+    setSelectedIds([]);
+  };
+
+  // Bulk delete
+  const handleBulkDelete = () => {
+    setActivities(prev => prev.filter(a => !selectedIds.includes(a.id)));
+    setSelectedIds([]);
+  };
+
+  // Add new activity
+  const handleAddActivity = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSubject.trim()) return;
+
+    const newAct = {
+      id: `ACT-${Date.now()}`,
+      type: newType,
+      subject: newSubject,
+      description: newDesc,
+      is_completed: false,
+      due_at: newDue || "No due date",
+      priority: newPriority,
+      user_name: newAssignee,
+      attachments: [],
+      notes: [],
+      created_at: "Just now"
+    };
+
+    setActivities([newAct, ...activities]);
+    
+    // Clear form
+    setNewSubject("");
+    setNewDesc("");
+    setNewDue("");
+  };
+
+  // Toggle task complete
+  const toggleComplete = (id: string) => {
+    setActivities(prev => prev.map(a => 
+      a.id === id ? { ...a, is_completed: !a.is_completed, completed_at: !a.is_completed ? "Just now" : undefined } : a
+    ));
+  };
+
+  // Save updated Note version
+  const handleSaveNoteVersion = () => {
+    if (noteEditContent.trim() === selectedNote.content) return;
+
+    const newHistory = {
+      version: selectedNote.version,
+      content: selectedNote.content,
+      user: selectedNote.user,
+      date: selectedNote.updated_at
+    };
+
+    setSelectedNote({
+      ...selectedNote,
+      version: selectedNote.version + 1,
+      content: noteEditContent,
+      updated_at: "Just now",
+      history: [newHistory, ...selectedNote.history]
+    });
+  };
+
+  // Add reply to note
+  const handleAddReply = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newReplyText.trim()) return;
+
+    const reply = {
+      id: `rep-${Date.now()}`,
+      author: "Juan (Admin)",
+      text: newReplyText,
+      date: "Just now"
+    };
+
+    setSelectedNote({
+      ...selectedNote,
+      replies: [...selectedNote.replies, reply]
+    });
+    setNewReplyText("");
+  };
+
+  // Add new reminder
+  const handleAddReminder = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!remindTitle.trim() || !remindTime) return;
+
+    const newRem = {
+      id: `REM-${Date.now()}`,
+      title: remindTitle,
+      remind_at: remindTime,
+      method: remindMethod,
+      status: "Active"
+    };
+
+    setReminders([...reminders, newRem]);
+    setRemindTitle("");
+    setRemindTime("");
+  };
+
+  // Filter activities
+  const filteredActivities = activities.filter(act => {
+    const matchesSearch = act.subject.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          act.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = typeFilter === "all" || act.type === typeFilter;
+    return matchesSearch && matchesType;
+  });
+
+  // Icon selector
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "phone_call":
+        return <Phone size={14} className="text-emerald-400" />;
+      case "meeting":
+        return <Video size={14} className="text-blue-400" />;
+      case "follow_up_task":
+        return <CheckSquare size={14} className="text-amber-400" />;
+      case "internal_note":
+        return <MessageCircle size={14} className="text-indigo-400" />;
+      case "appt":
+        return <Calendar size={14} className="text-purple-400" />;
+      default:
+        return <Activity size={14} className="text-slate-400" />;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h3 className="text-xl font-display font-bold text-white flex items-center gap-2">
+            <Activity size={22} className="text-indigo-400 animate-pulse" />
+            CRM Activities & Unified Timeline Engine
+          </h3>
+          <p className="text-xs text-slate-400">
+            A reusable, Salesforce-grade communication engine tracking client calls, automated webhooks callback audits, versions notes, and critical reminders.
+          </p>
+        </div>
+
+        {/* Core Stats overview */}
+        <div className="flex flex-wrap gap-2">
+          <div className="bg-slate-900/40 border border-slate-800 px-3 py-1.5 rounded-lg text-center min-w-[100px]">
+            <span className="text-[9px] font-mono uppercase text-slate-500 font-bold block">Total Stream</span>
+            <span className="text-sm font-bold text-slate-100 font-mono">{activities.length} logs</span>
+          </div>
+          <div className="bg-slate-900/40 border border-slate-800 px-3 py-1.5 rounded-lg text-center min-w-[100px]">
+            <span className="text-[9px] font-mono uppercase text-slate-500 font-bold block">Active Tasks</span>
+            <span className="text-sm font-bold text-amber-400 font-mono">
+              {activities.filter(a => a.type === "follow_up_task" && !a.is_completed).length} items
+            </span>
+          </div>
+          <div className="bg-slate-900/40 border border-slate-800 px-3 py-1.5 rounded-lg text-center min-w-[100px]">
+            <span className="text-[9px] font-mono uppercase text-slate-500 font-bold block">Reminders</span>
+            <span className="text-sm font-bold text-indigo-400 font-mono">{reminders.length} sched</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Left Side: Create Staging Activity & Reminders (4 Cols) */}
+        <div className="lg:col-span-4 space-y-6">
+          
+          {/* Quick Add Form */}
+          <div className="bg-slate-900/20 border border-slate-800 rounded-xl p-5 space-y-4 shadow-sm">
+            <div className="border-b border-slate-850 pb-2">
+              <span className="text-[10px] font-mono font-extrabold text-indigo-400 uppercase tracking-widest block">Quick Log Assistant</span>
+              <h4 className="text-xs font-bold text-slate-300">Create New Stream Interaction</h4>
+            </div>
+
+            <form onSubmit={handleAddActivity} className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <label className="text-[9px] font-mono uppercase font-bold text-slate-400 block">Activity Channel Type</label>
+                <select
+                  value={newType}
+                  onChange={(e) => setNewType(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-850 rounded px-2.5 py-1.5 text-slate-300 focus:outline-none focus:border-indigo-500 font-mono font-bold"
+                >
+                  <option value="phone_call">📞 Phone Call (Call logged)</option>
+                  <option value="meeting">🎥 Video Demo / Meeting</option>
+                  <option value="follow_up_task">✍ Follow-up Task</option>
+                  <option value="internal_note">📓 Internal Reference Note</option>
+                  <option value="appt">📅 Cal Appointment</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[9px] font-mono uppercase font-bold text-slate-400 block">Subject / Objective *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Scoping postgres deployment needs"
+                  value={newSubject}
+                  onChange={(e) => setNewSubject(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-850 rounded px-2.5 py-1.5 text-slate-300 focus:outline-none focus:border-indigo-500 font-medium"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[9px] font-mono uppercase font-bold text-slate-400 block">Detailed Summary</label>
+                <textarea
+                  rows={3}
+                  placeholder="Summarize the core outcome, next steps, and specific requirements from Caleb..."
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-850 rounded px-2.5 py-1.5 text-slate-300 focus:outline-none focus:border-indigo-500 text-[11px]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[9px] font-mono uppercase font-bold text-slate-400 block">Priority</label>
+                  <select
+                    value={newPriority}
+                    onChange={(e) => setNewPriority(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-850 rounded px-2 py-1.5 text-slate-300 font-mono"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[9px] font-mono uppercase font-bold text-slate-400 block">Due / Execution Date</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Today 5 PM, or In 2 Days"
+                    value={newDue}
+                    onChange={(e) => setNewDue(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-850 rounded px-2 py-1 text-slate-300 font-medium text-center"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[9px] font-mono uppercase font-bold text-slate-400 block">Assigned Staff Owner</label>
+                <select
+                  value={newAssignee}
+                  onChange={(e) => setNewAssignee(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-850 rounded px-2 py-1.5 text-slate-300"
+                >
+                  <option value="Juan (Admin)">Juan (Admin)</option>
+                  <option value="Mary Kamau">Mary Kamau (Senior Sales)</option>
+                  <option value="Caleb Kirui">Caleb Kirui (Partner Architect)</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded text-xs uppercase font-mono tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-sm"
+              >
+                <Plus size={14} /> Log Action to Timeline
+              </button>
+            </form>
+          </div>
+
+          {/* Alerts & Reminders Panel */}
+          <div className="bg-slate-900/20 border border-slate-800 rounded-xl p-5 space-y-4">
+            <div className="border-b border-slate-850 pb-2">
+              <span className="text-[10px] font-mono font-extrabold text-indigo-400 uppercase tracking-widest block">Alert Engine</span>
+              <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1">
+                <Bell size={13} className="text-amber-500" />
+                Active Reminders Panel
+              </h4>
+            </div>
+
+            {/* List reminders */}
+            <div className="space-y-2">
+              {reminders.map(rem => (
+                <div key={rem.id} className="p-2.5 rounded bg-slate-950/60 border border-slate-900 flex justify-between items-start text-[11px]">
+                  <div className="space-y-0.5">
+                    <span className="font-bold text-slate-200 block">{rem.title}</span>
+                    <span className="text-[9px] font-mono text-slate-500 block flex items-center gap-1">
+                      <Clock size={10} /> {rem.remind_at}
+                    </span>
+                  </div>
+                  <span className="text-[8px] font-mono uppercase bg-indigo-950/80 text-indigo-300 border border-indigo-900/60 px-1.5 py-0.5 rounded shrink-0">
+                    {rem.method === "in_app" ? "🔔 App" : "📧 Email"}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Add quick reminder */}
+            <form onSubmit={handleAddReminder} className="space-y-2 text-xs pt-2 border-t border-slate-900">
+              <span className="text-[9px] font-mono text-slate-500 uppercase block font-bold">Schedule Alert reminder:</span>
+              <input
+                type="text"
+                required
+                placeholder="Alert title (e.g. Call Caleb)"
+                value={remindTitle}
+                onChange={(e) => setRemindTitle(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-850 rounded px-2 py-1 text-slate-300"
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  required
+                  placeholder="When (e.g. 10 mins before)"
+                  value={remindTime}
+                  onChange={(e) => setRemindTime(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-850 rounded px-2 py-1 text-slate-300 font-mono text-center"
+                />
+                <select
+                  value={remindMethod}
+                  onChange={(e) => setRemindMethod(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-850 rounded px-2 py-1 text-slate-300"
+                >
+                  <option value="in_app">🔔 In-App</option>
+                  <option value="email">📧 Email</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                className="w-full py-1.5 bg-slate-950 hover:bg-slate-900 border border-slate-800 text-[10px] font-bold uppercase text-slate-300 rounded font-mono transition-colors"
+              >
+                Set Alarm
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Right Side: Timeline tabs and list views (8 Cols) */}
+        <div className="lg:col-span-8 flex flex-col space-y-6">
+          
+          {/* Tabs header */}
+          <div className="border border-slate-800 bg-slate-900/20 p-2 rounded-xl flex flex-wrap gap-1">
+            <button
+              onClick={() => setActiveTab("timeline")}
+              className={`px-4 py-2 rounded-lg text-xs font-semibold font-mono uppercase transition-all flex items-center gap-1.5 ${
+                activeTab === "timeline" ? "bg-indigo-600 text-white font-extrabold" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <History size={14} /> Unified Timeline
+            </button>
+            <button
+              onClick={() => setActiveTab("tasks")}
+              className={`px-4 py-2 rounded-lg text-xs font-semibold font-mono uppercase transition-all flex items-center gap-1.5 ${
+                activeTab === "tasks" ? "bg-indigo-600 text-white font-extrabold" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <CheckSquare size={14} /> Follow-up Tasks List
+            </button>
+            <button
+              onClick={() => setActiveTab("calendar")}
+              className={`px-4 py-2 rounded-lg text-xs font-semibold font-mono uppercase transition-all flex items-center gap-1.5 ${
+                activeTab === "calendar" ? "bg-indigo-600 text-white font-extrabold" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Calendar size={14} /> Calendar Grid
+            </button>
+            <button
+              onClick={() => setActiveTab("notes")}
+              className={`px-4 py-2 rounded-lg text-xs font-semibold font-mono uppercase transition-all flex items-center gap-1.5 ${
+                activeTab === "notes" ? "bg-indigo-600 text-white font-extrabold" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <FileText size={14} /> Notes Version Manager
+            </button>
+            <button
+              onClick={() => setActiveTab("companies")}
+              className={`px-4 py-2 rounded-lg text-xs font-semibold font-mono uppercase transition-all flex items-center gap-1.5 ${
+                activeTab === "companies" ? "bg-indigo-600 text-white font-extrabold" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Users size={14} /> Company Accounts Hub
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("contacts");
+                setContactViewMode("directory");
+              }}
+              className={`px-4 py-2 rounded-lg text-xs font-semibold font-mono uppercase transition-all flex items-center gap-1.5 ${
+                activeTab === "contacts" ? "bg-indigo-600 text-white font-extrabold" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <UserCheck size={14} /> Enterprise Contacts
+            </button>
+          </div>
+
+          {/* Tab contents */}
+          <div className="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-5 min-h-[500px]">
+            
+            {/* VIEW 1: Chronological Unified Timeline */}
+            {activeTab === "timeline" && (
+              <div className="space-y-5">
+                {/* Search and Filters */}
+                <div className="flex flex-col md:flex-row gap-3 items-center justify-between pb-3 border-b border-slate-900">
+                  <div className="relative w-full md:w-72 shrink-0">
+                    <Search className="absolute left-2.5 top-2.5 text-slate-500" size={14} />
+                    <input
+                      type="text"
+                      placeholder="Search timeline subjects..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-slate-900/60 border border-slate-800 rounded-lg pl-8 pr-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-300 font-medium"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                    <Filter size={12} className="text-slate-500" />
+                    <span className="text-[10px] font-mono uppercase text-slate-500">Filter:</span>
+                    <select
+                      value={typeFilter}
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                      className="bg-slate-900/60 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-300 font-mono"
+                    >
+                      <option value="all">All Logs</option>
+                      <option value="phone_call">Calls</option>
+                      <option value="meeting">Meetings</option>
+                      <option value="follow_up_task">Tasks</option>
+                      <option value="internal_note">Notes</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Bulk Actions header */}
+                {selectedIds.length > 0 && (
+                  <div className="bg-slate-900/60 border border-indigo-900/40 p-2.5 rounded-lg flex items-center justify-between text-xs font-mono">
+                    <span className="text-slate-300 font-bold">{selectedIds.length} items selected</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleBulkComplete}
+                        className="px-2.5 py-1 bg-emerald-600/10 hover:bg-emerald-600/25 text-emerald-400 border border-emerald-900/60 rounded text-[10px] font-bold uppercase transition-colors"
+                      >
+                        Complete Selected
+                      </button>
+                      <button
+                        onClick={handleBulkDelete}
+                        className="px-2.5 py-1 bg-rose-600/10 hover:bg-rose-600/25 text-rose-400 border border-rose-900/60 rounded text-[10px] font-bold uppercase transition-colors"
+                      >
+                        Delete Selected
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Timeline Feed Stream */}
+                <div className="relative border-l border-slate-900 ml-4 pl-6 space-y-6">
+                  {filteredActivities.length === 0 ? (
+                    <div className="text-center text-xs text-slate-600 py-12 font-mono">
+                      No stream records matching current parameters. Add/Log an activity!
+                    </div>
+                  ) : (
+                    filteredActivities.map((act) => {
+                      const isSelected = selectedIds.includes(act.id);
+                      return (
+                        <div key={act.id} className="relative group select-none">
+                          
+                          {/* Left bullet marker */}
+                          <div className={`absolute -left-[31px] top-1 w-6 h-6 rounded-full border border-slate-950 flex items-center justify-center bg-slate-900/80 group-hover:scale-110 transition-transform ${
+                            act.is_completed ? "ring-2 ring-emerald-500/25" : "ring-1 ring-slate-800"
+                          }`}>
+                            {getActivityIcon(act.type)}
+                          </div>
+
+                          {/* Card Content */}
+                          <div className={`p-4 rounded-xl border transition-all ${
+                            isSelected 
+                              ? "bg-slate-900/40 border-indigo-500/45" 
+                              : "bg-slate-900/10 border-slate-850 hover:bg-slate-900/20 hover:border-slate-800"
+                          }`}>
+                            <div className="flex justify-between items-start gap-4">
+                              <div className="space-y-1 min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  {/* Selection Checkbox */}
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => handleSelectId(act.id)}
+                                    className="rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-0 focus:ring-offset-0"
+                                  />
+                                  <span className={`font-bold text-slate-100 text-xs block leading-snug ${act.is_completed ? "line-through text-slate-500" : ""}`}>
+                                    {act.subject}
+                                  </span>
+                                  {act.priority === "high" && (
+                                    <span className="text-[8px] font-mono uppercase bg-rose-500/10 text-rose-400 border border-rose-900/60 px-1 rounded font-bold">
+                                      High
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[11px] text-slate-400 leading-relaxed font-sans">{act.description}</p>
+                                
+                                {/* Render internal attachments if any */}
+                                {act.attachments && act.attachments.length > 0 && (
+                                  <div className="flex flex-wrap gap-2 pt-2">
+                                    {act.attachments.map((f: any, idx: number) => (
+                                      <div key={idx} className="bg-slate-950/60 border border-slate-900 rounded p-1.5 flex items-center gap-1.5 text-[9px] text-slate-400 font-mono">
+                                        <Paperclip size={10} className="text-indigo-400" />
+                                        <span>{f.name} ({f.size})</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="text-right shrink-0 space-y-1">
+                                <span className="text-[9px] font-mono text-slate-500 block">{act.created_at}</span>
+                                <span className="text-[10px] font-mono block text-slate-400 font-bold">By: {act.user_name}</span>
+                                <span className={`text-[9px] font-mono uppercase font-bold block ${
+                                  act.is_completed ? "text-emerald-400" : "text-amber-500"
+                                }`}>
+                                  {act.due_at}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Actions bar at bottom of card */}
+                            <div className="flex items-center justify-between gap-4 mt-3 pt-2 border-t border-slate-900/60">
+                              <span className="text-[9px] font-mono text-slate-600">ID: {act.id}</span>
+                              <div className="flex items-center gap-2">
+                                {act.type === "follow_up_task" && (
+                                  <button
+                                    onClick={() => toggleComplete(act.id)}
+                                    className={`px-2.5 py-1 rounded text-[9px] font-mono uppercase font-bold transition-all border ${
+                                      act.is_completed 
+                                        ? "bg-slate-950 text-slate-500 border-slate-900" 
+                                        : "bg-emerald-600/10 hover:bg-emerald-600/25 text-emerald-400 border-emerald-900/60"
+                                    }`}
+                                  >
+                                    {act.is_completed ? "✓ Completed" : "Mark Done"}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* VIEW 2: Follow-up Tasks List */}
+            {activeTab === "tasks" && (
+              <div className="space-y-4 text-xs font-sans">
+                <div className="border-b border-slate-900 pb-2 flex justify-between items-center">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-200">Follow-up Task Board</h4>
+                    <p className="text-[10px] text-slate-500">View outstanding actions needing completion</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSelectAll}
+                      className="px-2.5 py-1 bg-slate-900 hover:bg-slate-850 text-[10px] text-slate-300 font-semibold border border-slate-800 rounded font-mono uppercase"
+                    >
+                      {selectedIds.length === activities.length ? "Deselect All" : "Select All"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {activities.filter(a => a.type === "follow_up_task").map(task => {
+                    const isOverdue = task.due_at.toLowerCase().includes("overdue");
+                    return (
+                      <div key={task.id} className={`p-3.5 rounded-xl border flex items-center justify-between gap-4 transition-all ${
+                        task.is_completed 
+                          ? "bg-slate-900/10 border-slate-900 opacity-65" 
+                          : "bg-slate-900/20 border-slate-800 hover:border-slate-750"
+                      }`}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <button
+                            onClick={() => toggleComplete(task.id)}
+                            className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                              task.is_completed 
+                                ? "bg-emerald-600 border-emerald-500 text-white" 
+                                : "border-slate-750 bg-slate-950 hover:border-indigo-500"
+                            }`}
+                          >
+                            {task.is_completed && <Check size={12} />}
+                          </button>
+                          <div className="min-w-0 space-y-0.5">
+                            <span className={`font-bold block text-xs ${task.is_completed ? "line-through text-slate-500" : "text-slate-200"}`}>
+                              {task.subject}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block truncate">{task.description}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded font-extrabold border ${
+                            task.priority === "high" 
+                              ? "bg-rose-950/80 text-rose-400 border-rose-900/60" 
+                              : "bg-slate-950 text-slate-400 border-slate-850"
+                          }`}>
+                            {task.priority} Priority
+                          </span>
+                          <span className={`text-[10px] font-mono font-bold ${
+                            isOverdue ? "text-rose-400 animate-pulse" : "text-slate-500"
+                          }`}>
+                            {task.due_at}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* VIEW 3: Calendar Grid View */}
+            {activeTab === "calendar" && (
+              <div className="space-y-4">
+                <div className="border-b border-slate-900 pb-2">
+                  <h4 className="text-sm font-bold text-slate-200">Scheduled Actions Calendar</h4>
+                  <p className="text-[10px] text-slate-500">Chronological schedule mapping month views</p>
+                </div>
+
+                {/* Simulated Grid Calendars */}
+                <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-mono pt-2">
+                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(d => (
+                    <div key={d} className="text-slate-500 uppercase font-bold py-1">{d}</div>
+                  ))}
+                  
+                  {Array.from({ length: 31 }).map((_, idx) => {
+                    const day = idx + 1;
+                    const hasCall = day === 3;
+                    const hasMeeting = day === 15;
+                    const hasTask = day === 28;
+                    return (
+                      <div key={idx} className="bg-slate-900/30 border border-slate-900 rounded p-2 min-h-[55px] flex flex-col justify-between items-start">
+                        <span className="text-slate-600 font-bold text-[9px]">{day}</span>
+                        
+                        {/* Interactive Dots for dates */}
+                        <div className="w-full space-y-0.5">
+                          {hasCall && (
+                            <div className="bg-emerald-900/50 text-emerald-400 border border-emerald-800/40 text-[7px] p-0.5 rounded truncate font-mono text-left font-bold uppercase">
+                              📞 Call
+                            </div>
+                          )}
+                          {hasMeeting && (
+                            <div className="bg-blue-900/50 text-blue-400 border border-blue-800/40 text-[7px] p-0.5 rounded truncate font-mono text-left font-bold uppercase">
+                              🎥 Meet
+                            </div>
+                          )}
+                          {hasTask && (
+                            <div className="bg-rose-900/50 text-rose-400 border border-rose-800/40 text-[7px] p-0.5 rounded truncate font-mono text-left font-bold uppercase">
+                              ⚠️ OVERDUE
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* VIEW 4: Notes Version Manager */}
+            {activeTab === "notes" && (
+              <div className="space-y-6 text-xs">
+                <div className="border-b border-slate-900 pb-2">
+                  <h4 className="text-sm font-bold text-slate-200">Polymorphic Rich Notes Manager</h4>
+                  <p className="text-[10px] text-slate-500">Edit, save versions, track logs audit trails, and reply to note threads.</p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Left Notes Editor Column (7 cols) */}
+                  <div className="lg:col-span-8 space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono bg-indigo-900 text-indigo-300 px-2 py-0.5 rounded font-bold uppercase">
+                            Version {selectedNote.version}
+                          </span>
+                          <span className="text-[11px] text-slate-300 font-mono">Last updated: {selectedNote.updated_at} by {selectedNote.user}</span>
+                        </div>
+                        <button
+                          onClick={handleSaveNoteVersion}
+                          className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-[10px] font-bold uppercase font-mono"
+                        >
+                          Save New Version
+                        </button>
+                      </div>
+
+                      <textarea
+                        rows={10}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-slate-300 font-mono leading-relaxed focus:outline-none focus:border-indigo-500"
+                        value={noteEditContent}
+                        onChange={(e) => setNoteEditContent(e.target.value)}
+                      />
+                    </div>
+
+                    {/* Replies thread */}
+                    <div className="space-y-3 pt-3 border-t border-slate-900">
+                      <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-bold">Comments & Thread Logs ({selectedNote.replies.length})</span>
+                      <div className="space-y-2">
+                        {selectedNote.replies.map((rep: any) => (
+                          <div key={rep.id} className="p-3 rounded-lg bg-slate-900 border border-slate-850 leading-relaxed">
+                            <div className="flex justify-between items-center mb-1 text-[10px] font-mono">
+                              <span className="font-bold text-slate-300">{rep.author}</span>
+                              <span className="text-slate-500">{rep.date}</span>
+                            </div>
+                            <p className="text-slate-300 text-[11px]">{rep.text}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Add comment reply */}
+                      <form onSubmit={handleAddReply} className="flex gap-2">
+                        <input
+                          type="text"
+                          required
+                          placeholder="Add comment / scoping update..."
+                          value={newReplyText}
+                          onChange={(e) => setNewReplyText(e.target.value)}
+                          className="flex-1 bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none"
+                        />
+                        <button
+                          type="submit"
+                          className="px-3 py-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold font-mono border border-slate-800 rounded text-[10px] uppercase"
+                        >
+                          Reply
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+
+                  {/* Right History Audit Sidebar Column (4 cols) */}
+                  <div className="lg:col-span-4 space-y-4">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-bold">Version History Logs</span>
+                    <div className="space-y-2.5">
+                      <div className="p-3 rounded-xl border border-indigo-900/40 bg-indigo-950/20 space-y-1.5">
+                        <div className="flex justify-between items-center text-[9px] font-mono font-bold uppercase text-indigo-400">
+                          <span>Active Note Version {selectedNote.version}</span>
+                          <span>Latest</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 truncate leading-snug">{selectedNote.content}</p>
+                        <span className="text-[8px] font-mono text-slate-500 block">By: {selectedNote.user} &bull; Just now</span>
+                      </div>
+
+                      {selectedNote.history.map((hist: any, index: number) => (
+                        <div key={index} className="p-3 rounded-xl border border-slate-900 bg-slate-950/50 space-y-1.5 opacity-65 hover:opacity-100 transition-opacity">
+                          <div className="flex justify-between items-center text-[9px] font-mono font-bold uppercase text-slate-500">
+                            <span>Note Version {hist.version}</span>
+                            <span className="underline cursor-pointer text-indigo-400 hover:text-indigo-300" onClick={() => {
+                              setNoteEditContent(hist.content);
+                            }}>Restore Draft</span>
+                          </div>
+                          <p className="text-[10px] text-slate-500 truncate leading-snug">{hist.content}</p>
+                          <span className="text-[8px] font-mono text-slate-600 block">By: {hist.user} &bull; {hist.date}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* VIEW 5: Company Accounts Hub */}
+            {activeTab === "companies" && (
+              <div className="space-y-6 text-xs">
+                <div className="border-b border-slate-900 pb-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-200">Enterprise Company (Account) Manager</h4>
+                    <p className="text-[10px] text-slate-500">Manage master profiles, hierarchy chains, multiple locations, and account health engines.</p>
+                  </div>
+                  <span className="bg-indigo-950 text-indigo-400 border border-indigo-900 px-2.5 py-0.5 rounded font-mono font-bold text-[9px] uppercase shrink-0">
+                    4 Accounts Loaded
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  {/* Left Company selector (4 cols) */}
+                  <div className="lg:col-span-4 space-y-2">
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block font-bold">Select Enterprise Account</span>
+                    <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                      {companies.map((comp) => {
+                        const isSelected = comp.id === selectedCompanyId;
+                        let healthColor = "text-emerald-400 bg-emerald-500/10 border-emerald-900/60";
+                        if (comp.health_score < 50) {
+                          healthColor = "text-rose-400 bg-rose-500/10 border-rose-900/60";
+                        } else if (comp.health_score < 80) {
+                          healthColor = "text-amber-400 bg-amber-500/10 border-amber-900/60";
+                        }
+
+                        return (
+                          <div
+                            key={comp.id}
+                            onClick={() => setSelectedCompanyId(comp.id)}
+                            className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                              isSelected
+                                ? "bg-indigo-950/20 border-indigo-500/60 shadow-lg shadow-indigo-950/30"
+                                : "bg-slate-900/10 border-slate-900 hover:bg-slate-900/30 hover:border-slate-800"
+                            }`}
+                          >
+                            <div className="flex justify-between items-start gap-2 mb-1">
+                              <span className="font-bold text-slate-200 block truncate">{comp.name}</span>
+                              <span className={`text-[8px] font-mono uppercase px-1.5 py-0.5 rounded border ${healthColor}`}>
+                                {comp.health_status} ({comp.health_score})
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center text-[9px] font-mono text-slate-500">
+                              <span>{comp.domain}</span>
+                              <span>{comp.locations.length} Locations</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Right Details Panel (8 cols) */}
+                  <div className="lg:col-span-8 bg-slate-900/20 border border-slate-850 rounded-xl p-5 space-y-5">
+                    {/* Header Details */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-900">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-base font-bold text-white">{activeCompany.name}</h3>
+                          {activeCompany.trading_name && (
+                            <span className="text-[10px] font-mono text-slate-400 font-bold">
+                              t/a {activeCompany.trading_name}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-400 font-mono">
+                          <span>🌐 <a href={activeCompany.website} target="_blank" rel="noreferrer" className="hover:underline text-indigo-400">{activeCompany.website}</a></span>
+                          <span>📞 {activeCompany.phone}</span>
+                          <span>🏢 {activeCompany.industry_classification}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <span className="bg-slate-950 border border-slate-800 px-2.5 py-1 rounded text-[10px] text-slate-300 font-mono">
+                          Reg: {activeCompany.registration_number}
+                        </span>
+                        <span className="bg-slate-950 border border-slate-800 px-2.5 py-1 rounded text-[10px] text-slate-300 font-mono">
+                          Tax: {activeCompany.tax_number}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Sub tabs for Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Left: Hierarchy & Core Data */}
+                      <div className="space-y-4 md:col-span-1 border-r border-slate-900 pr-4">
+                        <div>
+                          <span className="text-[9px] font-mono text-indigo-400 uppercase tracking-wider block font-bold mb-2">Corporate Hierarchy</span>
+                          
+                          {/* Parent card */}
+                          <div className="p-2.5 rounded bg-slate-950/80 border border-slate-900 space-y-1 mb-2">
+                            <span className="text-[8px] font-mono text-slate-500 uppercase block font-bold">Parent Company:</span>
+                            {activeCompany.parent_id ? (
+                              <div className="flex justify-between items-center gap-1">
+                                <span className="font-bold text-slate-300 truncate">{companies.find(c => c.id === activeCompany.parent_id)?.name}</span>
+                                <button
+                                  onClick={() => setSelectedCompanyId(activeCompany.parent_id)}
+                                  className="text-[9px] font-mono text-indigo-400 hover:underline shrink-0"
+                                >
+                                  Jump &rarr;
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-slate-600 block italic">Independent (No Parent)</span>
+                            )}
+                          </div>
+
+                          {/* Subsidiaries list */}
+                          <div className="p-2.5 rounded bg-slate-950/80 border border-slate-900 space-y-1">
+                            <span className="text-[8px] font-mono text-slate-500 uppercase block font-bold">Subsidiaries / Branches:</span>
+                            {companies.filter(c => c.parent_id === activeCompany.id).length > 0 ? (
+                              <div className="space-y-1 pt-1">
+                                {companies.filter(c => c.parent_id === activeCompany.id).map(sub => (
+                                  <div key={sub.id} className="flex justify-between items-center gap-1">
+                                    <span className="font-semibold text-slate-300 truncate">&bull; {sub.name}</span>
+                                    <button
+                                      onClick={() => setSelectedCompanyId(sub.id)}
+                                      className="text-[9px] font-mono text-indigo-400 hover:underline shrink-0"
+                                    >
+                                      Jump &rarr;
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-slate-600 block italic">No subsidiaries registered</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Metadata Box */}
+                        <div className="p-3 bg-slate-950/40 border border-slate-900 rounded-lg space-y-1.5 font-mono text-[10px]">
+                          <span className="text-[8px] font-mono text-slate-500 uppercase block font-bold mb-1">Company Demographics</span>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">Size Class:</span>
+                            <span className="text-slate-300 capitalize font-bold">{activeCompany.company_size.replace('_', ' ')}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">Employees:</span>
+                            <span className="text-slate-300 font-bold">{activeCompany.employees_count} pax</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">Revenue:</span>
+                            <span className="text-indigo-400 font-bold">{activeCompany.annual_revenue}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">Currency / Lang:</span>
+                            <span className="text-slate-300 font-bold">{activeCompany.currency} / {activeCompany.preferred_language}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Middle: Locations Manager */}
+                      <div className="space-y-3 md:col-span-1 border-r border-slate-900 pr-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[9px] font-mono text-indigo-400 uppercase tracking-wider block font-bold">Locations ({activeCompany.locations.length})</span>
+                        </div>
+
+                        {/* List current locations */}
+                        <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                          {activeCompany.locations.map((loc: any) => (
+                            <div key={loc.id} className="p-2 rounded bg-slate-950/60 border border-slate-900 flex justify-between items-start">
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-1">
+                                  <span className="font-bold text-slate-200">{loc.name}</span>
+                                  <span className="text-[7px] font-mono uppercase bg-slate-900 text-slate-400 px-1 rounded">
+                                    {loc.type}
+                                  </span>
+                                </div>
+                                <span className="text-slate-500 block text-[9px]">{loc.city}, {loc.country}</span>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setCompanies(prev => prev.map(c => {
+                                    if (c.id === activeCompany.id) {
+                                      return {
+                                        ...c,
+                                        locations: c.locations.filter((l: any) => l.id !== loc.id)
+                                      };
+                                    }
+                                    return c;
+                                  }));
+                                }}
+                                className="text-[9px] text-rose-500 hover:text-rose-400 shrink-0 font-bold"
+                              >
+                                &times;
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Add Location Sub-Form */}
+                        <div className="bg-slate-950/40 border border-slate-900 p-2.5 rounded-lg space-y-2">
+                          <span className="text-[8px] font-mono text-slate-400 uppercase block font-bold">Add Location</span>
+                          <input
+                            type="text"
+                            placeholder="Location Name (e.g. Eldoret Branch)"
+                            value={newLocName}
+                            onChange={(e) => setNewLocName(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-850 rounded px-2 py-1 text-slate-300 text-[10px]"
+                          />
+                          <div className="grid grid-cols-2 gap-1.5">
+                            <input
+                              type="text"
+                              placeholder="City"
+                              value={newLocCity}
+                              onChange={(e) => setNewLocCity(e.target.value)}
+                              className="w-full bg-slate-950 border border-slate-850 rounded px-2 py-1 text-slate-300 text-[10px]"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Country"
+                              value={newLocCountry}
+                              onChange={(e) => setNewLocCountry(e.target.value)}
+                              className="w-full bg-slate-950 border border-slate-850 rounded px-2 py-1 text-slate-300 text-[10px]"
+                            />
+                          </div>
+                          <select
+                            value={newLocType}
+                            onChange={(e) => setNewLocType(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-850 rounded px-2 py-1 text-slate-300 text-[10px]"
+                          >
+                            <option value="branch">Branch</option>
+                            <option value="warehouse">Warehouse</option>
+                            <option value="billing">Billing Address</option>
+                            <option value="shipping">Shipping Address</option>
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!newLocName.trim() || !newLocCity.trim() || !newLocCountry.trim()) return;
+                              const newLoc = {
+                                id: `LOC-${Date.now()}`,
+                                type: newLocType,
+                                name: newLocName,
+                                city: newLocCity,
+                                country: newLocCountry
+                              };
+
+                              setCompanies(prev => prev.map(c => {
+                                if (c.id === activeCompany.id) {
+                                  return {
+                                    ...c,
+                                    locations: [...c.locations, newLoc]
+                                  };
+                                }
+                                return c;
+                              }));
+
+                              setNewLocName("");
+                              setNewLocCity("");
+                              setNewLocCountry("");
+                            }}
+                            className="w-full py-1 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-300 hover:text-white font-bold rounded text-[9px] uppercase font-mono border border-indigo-900/60 animate-colors"
+                          >
+                            Save Location
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Right: Health Engine Panel */}
+                      <div className="space-y-4 md:col-span-1">
+                        <span className="text-[9px] font-mono text-indigo-400 uppercase tracking-wider block font-bold">Account Health Engine</span>
+
+                        {/* Health Status Dashboard card */}
+                        <div className="p-3 bg-slate-950 border border-slate-900 rounded-lg text-center space-y-2">
+                          <span className="text-[9px] font-mono text-slate-500 uppercase block font-bold">Health Score Card</span>
+                          <div className="flex items-baseline justify-center gap-1.5">
+                            <span className="text-2xl font-bold font-mono text-white">{activeCompany.health_score}</span>
+                            <span className="text-[10px] text-slate-500">/100</span>
+                          </div>
+                          
+                          {/* Badge Status */}
+                          <div className="inline-block px-2.5 py-0.5 rounded font-mono font-bold text-[9px] uppercase bg-slate-900">
+                            {activeCompany.health_status === "Healthy" && <span className="text-emerald-400">● {activeCompany.health_status}</span>}
+                            {activeCompany.health_status === "Warning" && <span className="text-amber-400">● {activeCompany.health_status}</span>}
+                            {activeCompany.health_status === "Critical" && <span className="text-rose-400">● {activeCompany.health_status}</span>}
+                          </div>
+
+                          {/* Score breakdown logs */}
+                          <div className="border-t border-slate-900 pt-2 text-left space-y-1 text-[9px] font-mono text-slate-400">
+                            <div className="flex justify-between">
+                              <span>Engagement Points:</span>
+                              <span className="text-slate-200">+{activeCompany.health_breakdown.engagement}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Opportunities Points:</span>
+                              <span className="text-slate-200">+{activeCompany.health_breakdown.opportunities}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Outstanding Tasks:</span>
+                              <span className={activeCompany.health_breakdown.outstanding_tasks < 0 ? "text-rose-400" : "text-slate-200"}>
+                                {activeCompany.health_breakdown.outstanding_tasks}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Interactive health score simulation triggers */}
+                        <div className="space-y-1.5 bg-slate-950/30 p-2.5 border border-slate-900 rounded-lg">
+                          <span className="text-[8px] font-mono text-slate-500 uppercase block font-bold mb-1">Simulate Shifts</span>
+                          <button
+                            onClick={() => {
+                              setCompanies(prev => prev.map(c => {
+                                if (c.id === activeCompany.id) {
+                                  const newOpp = c.health_breakdown.opportunities + 10;
+                                  const totalScore = Math.min(100, Math.max(0, 70 + c.health_breakdown.engagement + newOpp + c.health_breakdown.outstanding_tasks));
+                                  const status = totalScore < 50 ? "Critical" : totalScore < 80 ? "Warning" : "Healthy";
+                                  return {
+                                    ...c,
+                                    health_score: totalScore,
+                                    health_status: status,
+                                    health_breakdown: { ...c.health_breakdown, opportunities: newOpp }
+                                  };
+                                }
+                                return c;
+                              }));
+                            }}
+                            className="w-full text-left py-1 px-2 hover:bg-slate-900 text-slate-300 hover:text-white rounded text-[9px] font-mono block"
+                          >
+                            📈 Add Won Opportunity (+10)
+                          </button>
+                          <button
+                            onClick={() => {
+                              setCompanies(prev => prev.map(c => {
+                                if (c.id === activeCompany.id) {
+                                  const newEng = c.health_breakdown.engagement + 3;
+                                  const totalScore = Math.min(100, Math.max(0, 70 + newEng + c.health_breakdown.opportunities + c.health_breakdown.outstanding_tasks));
+                                  const status = totalScore < 50 ? "Critical" : totalScore < 80 ? "Warning" : "Healthy";
+                                  return {
+                                    ...c,
+                                    health_score: totalScore,
+                                    health_status: status,
+                                    health_breakdown: { ...c.health_breakdown, engagement: newEng }
+                                  };
+                                }
+                                return c;
+                              }));
+                            }}
+                            className="w-full text-left py-1 px-2 hover:bg-slate-900 text-slate-300 hover:text-white rounded text-[9px] font-mono block"
+                          >
+                            📞 Log Completed Call (+3)
+                          </button>
+                          <button
+                            onClick={() => {
+                              setCompanies(prev => prev.map(c => {
+                                if (c.id === activeCompany.id) {
+                                  const newOut = c.health_breakdown.outstanding_tasks - 10;
+                                  const totalScore = Math.min(100, Math.max(0, 70 + c.health_breakdown.engagement + c.health_breakdown.opportunities + newOut));
+                                  const status = totalScore < 50 ? "Critical" : totalScore < 80 ? "Warning" : "Healthy";
+                                  return {
+                                    ...c,
+                                    health_score: totalScore,
+                                    health_status: status,
+                                    health_breakdown: { ...c.health_breakdown, outstanding_tasks: newOut }
+                                  };
+                                }
+                                return c;
+                              }));
+                            }}
+                            className="w-full text-left py-1 px-2 hover:bg-slate-900 text-rose-400 hover:text-rose-300 rounded text-[9px] font-mono block"
+                          >
+                            ⚠️ Inject Overdue Task (-10)
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Simulation Outbox Feed */}
+                    <div className="bg-slate-950 p-3.5 border border-slate-900 rounded-xl space-y-2">
+                      <div className="flex justify-between items-center pb-1.5 border-b border-slate-900">
+                        <span className="text-[9px] font-mono text-emerald-400 uppercase tracking-wider font-extrabold block">
+                          ⚡ LIVE TRANSACTIONAL OUTBOX MONITOR (EVENT_OUTBOX)
+                        </span>
+                        <span className="text-[8px] font-mono bg-emerald-950 text-emerald-400 px-1.5 rounded animate-pulse">
+                          listening...
+                        </span>
+                      </div>
+                      <div className="space-y-1.5 font-mono text-[9px] leading-relaxed max-h-[80px] overflow-y-auto">
+                        <div className="text-slate-400">
+                          <span className="text-emerald-500 font-bold">[STORED]</span> crm.company.created &rarr; ID: {activeCompany.id} &bull; payload: name: {activeCompany.name} &bull; Org isolation ID: Acme_Enterprise
+                        </div>
+                        <div className="text-slate-400">
+                          <span className="text-emerald-500 font-bold">[STORED]</span> crm.company.updated &rarr; ID: {activeCompany.id} &bull; payload: health_score: {activeCompany.health_score} &bull; health_status: {activeCompany.health_status}
+                        </div>
+                        <div className="text-slate-500 text-[8px] italic">
+                          * Updates on the screen trigger background job dispatches in our Laravel queues, verifying high integrity isolation.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* VIEW 6: Enterprise Contact Management Engine */}
+            {activeTab === "contacts" && (
+              <div className="space-y-6">
+                {/* Header & Mode Switches */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-900">
+                  <div>
+                    <h3 className="text-base font-bold text-white flex items-center gap-2">
+                      <UserCheck size={18} className="text-indigo-400" />
+                      Enterprise Contact Management Engine
+                    </h3>
+                    <p className="text-xs text-slate-400">Salesforce/HubSpot-grade customer identity, 360° graph, and GDPR consent center.</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setContactViewMode("directory")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold font-mono transition-all ${
+                        contactViewMode === "directory" || contactViewMode === "profile"
+                          ? "bg-indigo-600 text-white"
+                          : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
+                      }`}
+                    >
+                      📁 Directory & 360° View
+                    </button>
+                    <button
+                      onClick={() => setContactViewMode("merge")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold font-mono transition-all ${
+                        contactViewMode === "merge"
+                          ? "bg-indigo-600 text-white"
+                          : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
+                      }`}
+                    >
+                      🤝 Merge Wizard
+                    </button>
+                    <button
+                      onClick={() => setContactViewMode("import")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold font-mono transition-all ${
+                        contactViewMode === "import"
+                          ? "bg-indigo-600 text-white"
+                          : "bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800"
+                      }`}
+                    >
+                      📥 CSV/JSON Import & Rollback
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sub-view 1: Directory & 360 View */}
+                {(contactViewMode === "directory" || contactViewMode === "profile") && (
+                  <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                    {/* LEFT PANEL: Directory list (5 Cols) */}
+                    <div className="xl:col-span-5 space-y-4">
+                      {/* Search & Sidebar Filters */}
+                      <div className="bg-slate-900/40 border border-slate-900 p-4 rounded-xl space-y-3">
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-2.5 text-slate-500" size={14} />
+                          <input
+                            type="text"
+                            placeholder="Search contacts (name, email, job...)"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-300 font-mono"
+                          />
+                        </div>
+
+                        {/* Dropdown Filters Grid */}
+                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                          <div>
+                            <span className="text-slate-500 font-mono block mb-1">TIER:</span>
+                            <select
+                              value={tierFilter}
+                              onChange={(e) => setTierFilter(e.target.value)}
+                              className="w-full bg-slate-950 border border-slate-850 rounded p-1.5 text-slate-300 text-[10px] focus:outline-none focus:border-indigo-500 font-mono"
+                            >
+                              <option value="all">All Tiers</option>
+                              <option value="Tier A">Tier A (High-Val)</option>
+                              <option value="Tier B">Tier B (Mid-Val)</option>
+                              <option value="Tier C">Tier C (Low-Val)</option>
+                            </select>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 font-mono block mb-1">SEGMENT:</span>
+                            <select
+                              value={segmentFilter}
+                              onChange={(e) => setSegmentFilter(e.target.value)}
+                              className="w-full bg-slate-950 border border-slate-850 rounded p-1.5 text-slate-300 text-[10px] focus:outline-none focus:border-indigo-500 font-mono"
+                            >
+                              <option value="all">All Segments</option>
+                              <option value="Enterprise">Enterprise</option>
+                              <option value="Mid-Market">Mid-Market</option>
+                              <option value="SMB">SMB</option>
+                            </select>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 font-mono block mb-1">STAGE:</span>
+                            <select
+                              value={lifecycleFilter}
+                              onChange={(e) => setLifecycleFilter(e.target.value)}
+                              className="w-full bg-slate-950 border border-slate-850 rounded p-1.5 text-slate-300 text-[10px] focus:outline-none focus:border-indigo-500 font-mono"
+                            >
+                              <option value="all">All Stages</option>
+                              <option value="Lead">Lead</option>
+                              <option value="MQL">MQL</option>
+                              <option value="SQL">SQL</option>
+                              <option value="Customer">Customer</option>
+                            </select>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 font-mono block mb-1">HEALTH SCORE:</span>
+                            <select
+                              value={healthFilter}
+                              onChange={(e) => setHealthFilter(e.target.value)}
+                              className="w-full bg-slate-950 border border-slate-850 rounded p-1.5 text-slate-300 text-[10px] focus:outline-none focus:border-indigo-500 font-mono"
+                            >
+                              <option value="all">All Health</option>
+                              <option value="Healthy">Healthy (&ge;80)</option>
+                              <option value="Warning">Warning (50-79)</option>
+                              <option value="Critical">Critical (&lt;50)</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bulk Actions Console */}
+                      {selectedContactIds.length > 0 && (
+                        <div className="bg-indigo-950/20 border border-indigo-900/60 p-3 rounded-xl flex items-center justify-between text-xs font-mono">
+                          <span className="text-slate-300 font-bold">{selectedContactIds.length} Selected</span>
+                          <div className="flex gap-1.5">
+                            <button
+                              onClick={() => {
+                                setContacts(prev => prev.map(c => 
+                                  selectedContactIds.includes(c.id) 
+                                    ? { ...c, tier: "Tier A", health_score: Math.min(100, c.health_score + 5) } 
+                                    : c
+                                ));
+                                triggerEventLog("crm.contact.bulk_tag", "Multiple Contacts");
+                                alert("✓ Promoted selected contacts to Tier A (+5 health bonus)");
+                              }}
+                              className="px-2 py-1 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded text-[9px] hover:bg-indigo-600/40"
+                            >
+                              🏷️ Tier A
+                            </button>
+                            <button
+                              onClick={() => {
+                                setContacts(prev => prev.map(c => 
+                                  selectedContactIds.includes(c.id) 
+                                    ? { ...c, lifecycle_stage: "Customer" } 
+                                    : c
+                                ));
+                                triggerEventLog("crm.contact.bulk_stage", "Multiple Contacts");
+                                alert("✓ Lifecycle stage updated to Customer");
+                              }}
+                              className="px-2 py-1 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded text-[9px] hover:bg-emerald-600/40"
+                            >
+                              ✓ Customer
+                            </button>
+                            <button
+                              onClick={() => {
+                                setContacts(prev => prev.filter(c => !selectedContactIds.includes(c.id)));
+                                setSelectedContactIds([]);
+                                triggerEventLog("crm.contact.bulk_delete", "Multiple Contacts");
+                                alert("✓ Selected contacts archived/deleted from the directory.");
+                              }}
+                              className="px-2 py-1 bg-rose-600/20 text-rose-400 border border-rose-500/30 rounded text-[9px] hover:bg-rose-600/40"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Contacts List Feed */}
+                      <div className="space-y-2.5 max-h-[600px] overflow-y-auto pr-1">
+                        {contacts
+                          .filter(c => {
+                            const matchSearch = (c.first_name + " " + c.last_name + " " + c.email + " " + c.job_title + " " + (c.company_name || "")).toLowerCase().includes(searchQuery.toLowerCase());
+                            const matchTier = tierFilter === "all" || c.tier === tierFilter;
+                            const matchSegment = segmentFilter === "all" || c.segment === segmentFilter;
+                            const matchLifecycle = lifecycleFilter === "all" || c.lifecycle_stage === lifecycleFilter;
+                            const matchHealth = healthFilter === "all" || c.health_status === healthFilter;
+                            return matchSearch && matchTier && matchSegment && matchLifecycle && matchHealth;
+                          })
+                          .map((c) => {
+                            const isSelected = selectedContactId === c.id;
+                            const isMultiChecked = selectedContactIds.includes(c.id);
+                            return (
+                              <div
+                                key={c.id}
+                                onClick={() => {
+                                  setSelectedContactId(c.id);
+                                  setContactViewMode("profile");
+                                }}
+                                className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                                  isSelected
+                                    ? "bg-slate-900 border-indigo-500/60 shadow-lg shadow-indigo-600/10"
+                                    : "bg-slate-900/20 border-slate-900 hover:bg-slate-900/40 hover:border-slate-800"
+                                }`}
+                              >
+                                <div className="flex gap-3 items-start">
+                                  {/* Multi-select box */}
+                                  <input
+                                    type="checkbox"
+                                    checked={isMultiChecked}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={() => {
+                                      if (isMultiChecked) {
+                                        setSelectedContactIds(prev => prev.filter(id => id !== c.id));
+                                      } else {
+                                        setSelectedContactIds(prev => [...prev, c.id]);
+                                      }
+                                    }}
+                                    className="rounded border-slate-800 bg-slate-950 text-indigo-600 focus:ring-0 mt-1"
+                                  />
+
+                                  {/* Profile Avatar & Primary Details */}
+                                  <div className="flex-1 space-y-1 min-w-0">
+                                    <div className="flex justify-between items-start gap-2">
+                                      <h4 className="font-bold text-slate-100 text-xs truncate">
+                                        {c.first_name} {c.middle_name ? c.middle_name + " " : ""}{c.last_name}
+                                      </h4>
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <span className={`text-[8px] font-mono px-1.5 py-0.5 rounded border ${
+                                          c.tier === "Tier A" ? "bg-amber-950/40 text-amber-400 border-amber-900/50" :
+                                          c.tier === "Tier B" ? "bg-indigo-950/40 text-indigo-400 border-indigo-900/50" :
+                                          "bg-slate-900 text-slate-400 border-slate-800"
+                                        }`}>
+                                          {c.tier}
+                                        </span>
+                                        <span className={`text-[8px] font-mono px-1.5 py-0.5 rounded ${
+                                          c.health_status === "Healthy" ? "bg-emerald-950 text-emerald-400" :
+                                          c.health_status === "Warning" ? "bg-amber-950 text-amber-400" :
+                                          "bg-rose-950 text-rose-400"
+                                        }`}>
+                                          Score: {c.health_score}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 truncate">{c.job_title}</p>
+                                    <div className="flex items-center justify-between pt-1.5 text-[9px] font-mono text-slate-500">
+                                      <span className="truncate">{c.company_name || "Independent"}</span>
+                                      <span className="bg-slate-950 text-slate-400 px-1.5 rounded">{c.lifecycle_stage}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+
+                    {/* RIGHT PANEL: 360 Degree Profile Card (7 Cols) */}
+                    <div className="xl:col-span-7">
+                      {(() => {
+                        const contact = contacts.find(c => c.id === selectedContactId);
+                        if (!contact) {
+                          return (
+                            <div className="h-full border border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center p-12 text-center text-slate-500 text-xs font-mono">
+                              <Eye size={24} className="mb-2 text-slate-600 animate-pulse" />
+                              Select a contact to engage the 360° Profile Viewer.
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="space-y-6">
+                            {/* 360 Degree Profile Header */}
+                            <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-5 relative overflow-hidden">
+                              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+                              
+                              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-950">
+                                <div className="flex gap-4 items-center">
+                                  <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-display font-black text-lg shadow-lg shadow-indigo-600/10">
+                                    {contact.first_name[0]}{contact.last_name[0]}
+                                  </div>
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <h3 className="text-base font-bold text-white">
+                                        {contact.first_name} {contact.middle_name ? contact.middle_name + " " : ""}{contact.last_name}
+                                      </h3>
+                                      <span className="bg-indigo-500/10 text-indigo-400 text-[9px] font-mono border border-indigo-500/20 px-1.5 rounded-full">
+                                        {contact.segment}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-slate-400">{contact.job_title} &bull; <span className="text-indigo-300 font-semibold">{contact.company_name}</span></p>
+                                  </div>
+                                </div>
+
+                                <div className="flex gap-1.5 font-mono text-[9px]">
+                                  <div className="bg-slate-950 px-2.5 py-1.5 rounded border border-slate-900 text-slate-400">
+                                    STATUS: <span className="text-emerald-400 font-bold">{contact.status}</span>
+                                  </div>
+                                  <div className="bg-slate-950 px-2.5 py-1.5 rounded border border-slate-900 text-slate-400">
+                                    CLASS: <span className="text-indigo-400 font-bold">{contact.classification || "High Touch"}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Key Metrics Quick Ribbon */}
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 text-center">
+                                <div className="bg-slate-950/40 p-2 border border-slate-950 rounded-lg">
+                                  <span className="text-[8px] font-mono text-slate-500 block uppercase">Health Status</span>
+                                  <span className={`text-xs font-bold font-mono ${
+                                    contact.health_status === "Healthy" ? "text-emerald-400" :
+                                    contact.health_status === "Warning" ? "text-amber-400" : "text-rose-400"
+                                  }`}>
+                                    ● {contact.health_status}
+                                  </span>
+                                </div>
+                                <div className="bg-slate-950/40 p-2 border border-slate-950 rounded-lg">
+                                  <span className="text-[8px] font-mono text-slate-500 block uppercase">GDPR Consent</span>
+                                  <span className={`text-xs font-bold font-mono ${
+                                    contact.gdpr_consent_status === "granted" ? "text-emerald-400" : "text-slate-400"
+                                  }`}>
+                                    {contact.gdpr_consent_status === "granted" ? "Granted" : "Not asked"}
+                                  </span>
+                                </div>
+                                <div className="bg-slate-950/40 p-2 border border-slate-950 rounded-lg">
+                                  <span className="text-[8px] font-mono text-slate-500 block uppercase">Buying Role</span>
+                                  <span className="text-xs font-bold font-mono text-slate-300">
+                                    {contact.buying_role || "User"}
+                                  </span>
+                                </div>
+                                <div className="bg-slate-950/40 p-2 border border-slate-950 rounded-lg">
+                                  <span className="text-[8px] font-mono text-slate-500 block uppercase">Owner (RBAC)</span>
+                                  <span className="text-xs font-bold font-mono text-indigo-400">
+                                    Agent Juan (Admin)
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 360 Tabs Section */}
+                            <div className="bg-slate-900/20 border border-slate-900 rounded-2xl p-5 space-y-5">
+                              {/* Multi-address, Graph, Consent & Health Sections */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* COLUMN 1: Personal & Communication Channels */}
+                                <div className="space-y-4">
+                                  <div className="space-y-2">
+                                    <h4 className="text-xs font-bold text-slate-300 border-b border-slate-900 pb-1.5 uppercase font-mono tracking-wider">
+                                      📞 Communication Channels
+                                    </h4>
+                                    <div className="space-y-1.5 text-xs">
+                                      <div className="flex justify-between font-mono text-[10px]">
+                                        <span className="text-slate-500">Email (Work):</span>
+                                        <span className="text-slate-300">{contact.email}</span>
+                                      </div>
+                                      {contact.personal_email && (
+                                        <div className="flex justify-between font-mono text-[10px]">
+                                          <span className="text-slate-500">Email (Pers):</span>
+                                          <span className="text-slate-300">{contact.personal_email}</span>
+                                        </div>
+                                      )}
+                                      <div className="flex justify-between font-mono text-[10px]">
+                                        <span className="text-slate-500">Work Phone:</span>
+                                        <span className="text-slate-300">{contact.phone}</span>
+                                      </div>
+                                      {contact.whatsapp && (
+                                        <div className="flex justify-between font-mono text-[10px]">
+                                          <span className="text-slate-500">WhatsApp:</span>
+                                          <span className="text-slate-300 text-emerald-400">{contact.whatsapp}</span>
+                                        </div>
+                                      )}
+                                      {contact.telegram && (
+                                        <div className="flex justify-between font-mono text-[10px]">
+                                          <span className="text-slate-500">Telegram:</span>
+                                          <span className="text-slate-300 text-sky-400">{contact.telegram}</span>
+                                        </div>
+                                      )}
+                                      <div className="flex justify-between font-mono text-[10px]">
+                                        <span className="text-slate-500">Preferred Lang:</span>
+                                        <span className="text-slate-300">{contact.preferred_language || "English"}</span>
+                                      </div>
+                                      <div className="flex justify-between font-mono text-[10px]">
+                                        <span className="text-slate-500">Timezone:</span>
+                                        <span className="text-slate-300">{contact.timezone || "UTC"}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Custom Fields (Unlimited!) */}
+                                  <div className="space-y-2 bg-slate-950/40 p-3 rounded-xl border border-slate-900">
+                                    <div className="flex justify-between items-center border-b border-slate-900 pb-1">
+                                      <span className="text-[10px] font-bold text-slate-300 uppercase font-mono tracking-wider">
+                                        🗃️ Tenant Custom Fields
+                                      </span>
+                                      <button
+                                        onClick={() => {
+                                          const key = prompt("Enter Custom Field Key Name (e.g. legacy_id, segment_owner):");
+                                          if (!key) return;
+                                          const val = prompt(`Enter Value for '${key}':`);
+                                          if (!val) return;
+                                          setContacts(prev => prev.map(c => {
+                                            if (c.id === contact.id) {
+                                              return { ...c, custom_fields: { ...c.custom_fields, [key]: val } };
+                                            }
+                                            return c;
+                                          }));
+                                          triggerEventLog("crm.contact.custom_fields_updated", contact.first_name + " " + contact.last_name);
+                                          alert(`✓ Added custom field: ${key} = ${val}`);
+                                        }}
+                                        className="text-[9px] text-indigo-400 font-mono font-bold hover:underline"
+                                      >
+                                        + Add Field
+                                      </button>
+                                    </div>
+                                    <div className="space-y-1.5 text-[10px] font-mono">
+                                      {Object.entries(contact.custom_fields || {}).length === 0 ? (
+                                        <span className="text-slate-600 block">No tenant-defined custom fields.</span>
+                                      ) : (
+                                        Object.entries(contact.custom_fields || {}).map(([key, val]: any) => (
+                                          <div key={key} className="flex justify-between">
+                                            <span className="text-slate-500 uppercase">{key}:</span>
+                                            <span className="text-slate-300">{val}</span>
+                                          </div>
+                                        ))
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* COLUMN 2: Granular Consent & Marketing Preferences */}
+                                <div className="space-y-4">
+                                  <div className="space-y-2">
+                                    <h4 className="text-xs font-bold text-slate-300 border-b border-slate-900 pb-1.5 uppercase font-mono tracking-wider">
+                                      🛡️ GDPR Consent Center (Granular)
+                                    </h4>
+                                    <div className="space-y-2 bg-slate-950/40 p-3 rounded-xl border border-slate-900">
+                                      <div className="flex justify-between items-center text-xs">
+                                        <span className="text-slate-400 font-mono">Email Campaign Consent</span>
+                                        <button
+                                          onClick={() => {
+                                            const newVal = !contact.email_consent;
+                                            setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, email_consent: newVal, gdpr_consent_status: newVal ? "granted" : c.gdpr_consent_status } : c));
+                                            triggerEventLog("crm.contact.consent_changed", `${contact.first_name} (Email: ${newVal ? 'Granted' : 'Revoked'})`);
+                                          }}
+                                          className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono uppercase ${
+                                            contact.email_consent ? "bg-emerald-950 text-emerald-400 border border-emerald-900" : "bg-slate-900 text-slate-500"
+                                          }`}
+                                        >
+                                          {contact.email_consent ? "GRANTED" : "REVOKED"}
+                                        </button>
+                                      </div>
+                                      <div className="flex justify-between items-center text-xs">
+                                        <span className="text-slate-400 font-mono">WhatsApp Notifications</span>
+                                        <button
+                                          onClick={() => {
+                                            const newVal = !contact.whatsapp_consent;
+                                            setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, whatsapp_consent: newVal } : c));
+                                            triggerEventLog("crm.contact.consent_changed", `${contact.first_name} (WhatsApp: ${newVal ? 'Granted' : 'Revoked'})`);
+                                          }}
+                                          className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono uppercase ${
+                                            contact.whatsapp_consent ? "bg-emerald-950 text-emerald-400 border border-emerald-900" : "bg-slate-900 text-slate-500"
+                                          }`}
+                                        >
+                                          {contact.whatsapp_consent ? "GRANTED" : "REVOKED"}
+                                        </button>
+                                      </div>
+                                      <div className="flex justify-between items-center text-xs">
+                                        <span className="text-slate-400 font-mono">SMS Broadcast Consent</span>
+                                        <button
+                                          onClick={() => {
+                                            const newVal = !contact.do_not_sms;
+                                            setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, do_not_sms: newVal } : c));
+                                            triggerEventLog("crm.contact.consent_changed", `${contact.first_name} (SMS block toggle)`);
+                                          }}
+                                          className={`px-2 py-0.5 rounded text-[9px] font-bold font-mono uppercase ${
+                                            !contact.do_not_sms ? "bg-emerald-950 text-emerald-400 border border-emerald-900" : "bg-rose-950/40 text-rose-400 border border-rose-900/40"
+                                          }`}
+                                        >
+                                          {!contact.do_not_sms ? "ALLOWED" : "BLOCKED"}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Direct Relationship Graph */}
+                                  <div className="space-y-2">
+                                    <h4 className="text-xs font-bold text-slate-300 border-b border-slate-900 pb-1.5 uppercase font-mono tracking-wider">
+                                      🕸️ Relationship Hierarchy Graph
+                                    </h4>
+                                    <div className="bg-slate-950/40 p-3 rounded-xl border border-slate-900 text-xs font-mono space-y-2">
+                                      <div className="flex justify-between items-center text-[10px]">
+                                        <span className="text-slate-500">REPORTS TO (Manager):</span>
+                                        <span className="text-indigo-400 font-bold">
+                                          {contact.manager_id ? contacts.find(c => c.id === contact.manager_id)?.first_name + " " + contacts.find(c => c.id === contact.manager_id)?.last_name : "None assigned"}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between items-center text-[10px]">
+                                        <span className="text-slate-500">DIRECT SUBORDINATES:</span>
+                                        <span className="text-indigo-400 font-bold">
+                                          {contacts.filter(c => c.manager_id === contact.id).map(c => c.first_name).join(", ") || "None"}
+                                        </span>
+                                      </div>
+                                      {/* Prevent circular loop test */}
+                                      <div className="pt-2 border-t border-slate-900">
+                                        <button
+                                          onClick={() => {
+                                            const other = contacts.find(c => c.id !== contact.id);
+                                            if (!other) return;
+                                            
+                                            // Circular graph detection simulation
+                                            if (contact.manager_id === other.id || other.manager_id === contact.id) {
+                                              alert("⚠️ CIRCULAR GRAPH ERROR: Establishing this manager hierarchy will cause a self-referencing relationship cycle. Action denied by ContactRelationship policy.");
+                                              return;
+                                            }
+
+                                            setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, manager_id: other.id } : c));
+                                            triggerEventLog("crm.contact.relationship_updated", `${contact.first_name} manager established as ${other.first_name}`);
+                                          }}
+                                          className="w-full py-1 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[9px] text-slate-300 uppercase rounded text-center transition-colors font-bold"
+                                        >
+                                          🔗 Test Link Alternate Manager
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Interactive Address Manager */}
+                              <div className="space-y-2 pt-4 border-t border-slate-900">
+                                <div className="flex justify-between items-center pb-1.5 border-b border-slate-900">
+                                  <h4 className="text-xs font-bold text-slate-300 uppercase font-mono tracking-wider">
+                                    📍 Address Manager
+                                  </h4>
+                                  <button
+                                    onClick={() => {
+                                      const type = prompt("Address Type (billing, shipping, home, office):", "shipping");
+                                      if (!type) return;
+                                      const street = prompt("Street details:");
+                                      if (!street) return;
+                                      const city = prompt("City:");
+                                      if (!city) return;
+                                      const country = prompt("Country:");
+                                      if (!country) return;
+
+                                      const newAddr = {
+                                        id: "ADDR-" + Date.now(),
+                                        type,
+                                        is_primary: false,
+                                        street,
+                                        city,
+                                        country,
+                                        timezone: "UTC"
+                                      };
+
+                                      setContacts(prev => prev.map(c => {
+                                        if (c.id === contact.id) {
+                                          return { ...c, addresses: [...(c.addresses || []), newAddr] };
+                                        }
+                                        return c;
+                                      }));
+                                      triggerEventLog("crm.contact.updated", `Added address type: ${type} to ${contact.first_name}`);
+                                    }}
+                                    className="text-[9px] text-indigo-400 font-mono font-bold hover:underline"
+                                  >
+                                    + Add Address
+                                  </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  {(!contact.addresses || contact.addresses.length === 0) ? (
+                                    <div className="sm:col-span-2 text-center py-4 font-mono text-[10px] text-slate-600">
+                                      No address records mapped to this aggregate.
+                                    </div>
+                                  ) : (
+                                    contact.addresses.map((addr: any) => (
+                                      <div key={addr.id} className="bg-slate-950 p-3 rounded-xl border border-slate-900 relative">
+                                        <button
+                                          onClick={() => {
+                                            setContacts(prev => prev.map(c => {
+                                              if (c.id === contact.id) {
+                                                return { ...c, addresses: c.addresses.filter((a: any) => a.id !== addr.id) };
+                                              }
+                                              return c;
+                                            }));
+                                            triggerEventLog("crm.contact.updated", `Removed address type: ${addr.type}`);
+                                          }}
+                                          className="absolute top-2.5 right-2.5 text-rose-500 hover:text-rose-400"
+                                        >
+                                          <Trash2 size={10} />
+                                        </button>
+                                        <div className="flex items-center gap-1.5 mb-1">
+                                          <span className="text-[8px] font-mono font-bold uppercase px-1.5 py-0.5 rounded bg-indigo-950/40 text-indigo-400">
+                                            {addr.type}
+                                          </span>
+                                          {addr.is_primary && (
+                                            <span className="text-[7px] font-mono font-bold uppercase px-1 rounded bg-emerald-950 text-emerald-400">
+                                              Primary
+                                            </span>
+                                          )}
+                                        </div>
+                                        <p className="text-[10px] text-slate-300 font-mono">{addr.street}</p>
+                                        <p className="text-[9px] text-slate-500 font-mono">{addr.city}, {addr.country}</p>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Custom Health Breakdown Panel */}
+                              <div className="space-y-3 pt-4 border-t border-slate-900">
+                                <h4 className="text-xs font-bold text-slate-300 uppercase font-mono tracking-wider">
+                                  🏥 Real-time Health Metrics & Breakdown (ContactHealthService)
+                                </h4>
+                                <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-center text-slate-300 font-mono text-[9px]">
+                                  <div className="bg-slate-950/60 p-2 border border-slate-900 rounded-lg">
+                                    <span className="text-slate-500 block">ENGAGEMENT</span>
+                                    <span className="text-emerald-400 font-bold">+{contact.health_breakdown.engagement}</span>
+                                  </div>
+                                  <div className="bg-slate-950/60 p-2 border border-slate-900 rounded-lg">
+                                    <span className="text-slate-500 block">RESPONSIVE</span>
+                                    <span className="text-emerald-400 font-bold">+{contact.health_breakdown.responsiveness}</span>
+                                  </div>
+                                  <div className="bg-slate-950/60 p-2 border border-slate-900 rounded-lg">
+                                    <span className="text-slate-500 block">MEETINGS</span>
+                                    <span className="text-emerald-400 font-bold">+{contact.health_breakdown.meeting_frequency}</span>
+                                  </div>
+                                  <div className="bg-slate-950/60 p-2 border border-slate-900 rounded-lg">
+                                    <span className="text-slate-500 block">INFLUENCE</span>
+                                    <span className="text-indigo-400 font-bold">+{contact.health_breakdown.sales_influence}</span>
+                                  </div>
+                                  <div className="bg-slate-950/60 p-2 border border-slate-900 rounded-lg">
+                                    <span className="text-slate-500 block">GRAPH EDGE</span>
+                                    <span className="text-indigo-400 font-bold">+{contact.health_breakdown.relationship_strength}</span>
+                                  </div>
+                                  <div className="bg-slate-950/60 p-2 border border-slate-900 rounded-lg">
+                                    <span className="text-slate-500 block">COMPLETENESS</span>
+                                    <span className="text-emerald-400 font-bold">+{contact.health_breakdown.profile_completeness || 15}</span>
+                                  </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => {
+                                      // Boost completed meeting points
+                                      const newScore = Math.min(100, contact.health_score + 6);
+                                      const newBreakdown = {
+                                        ...contact.health_breakdown,
+                                        meeting_frequency: contact.health_breakdown.meeting_frequency + 6
+                                      };
+                                      setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, health_score: newScore, health_breakdown: newBreakdown, health_status: newScore >= 80 ? 'Healthy' : 'Warning' } : c));
+                                      triggerEventLog("crm.contact.health_changed", `${contact.first_name} Health boosted to ${newScore}%`);
+                                    }}
+                                    className="flex-1 py-1 px-3 bg-indigo-600/20 text-indigo-400 border border-indigo-900/50 text-[9px] hover:bg-indigo-600/35 uppercase rounded font-mono font-bold transition-colors"
+                                  >
+                                     Log Successful Meeting (+6 Health)
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      // Deduct outstanding tasks
+                                      const newScore = Math.max(0, contact.health_score - 12);
+                                      setContacts(prev => prev.map(c => c.id === contact.id ? { ...c, health_score: newScore, health_status: newScore < 50 ? 'Critical' : 'Warning' } : c));
+                                      triggerEventLog("crm.contact.health_changed", `${contact.first_name} Health deteriorated to ${newScore}% due to overdue tasks`);
+                                    }}
+                                    className="flex-1 py-1 px-3 bg-rose-600/20 text-rose-400 border border-rose-900/50 text-[9px] hover:bg-rose-600/35 uppercase rounded font-mono font-bold transition-colors"
+                                  >
+                                     Inject Overdue Task Alert (-12 Health)
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {/* Sub-view 2: Merge Wizard */}
+                {contactViewMode === "merge" && (
+                  <div className="bg-slate-900/20 border border-slate-900 p-6 rounded-2xl space-y-6">
+                    <div>
+                      <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                        🤝 Duplicate Contact Merge Wizard
+                      </h4>
+                      <p className="text-xs text-slate-400">Identify matching identities, select properties to consolidate, and perform atomic ledger merging.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Left: Select Master & Duplicate */}
+                      <div className="space-y-4">
+                        <div className="bg-slate-950 p-4 border border-slate-900 rounded-xl space-y-3">
+                          <span className="text-[10px] font-mono text-indigo-400 font-extrabold uppercase block border-b border-slate-900 pb-1.5">
+                            Step 1: Choose Master Record (Survivor)
+                          </span>
+                          <p className="text-[11px] text-slate-400 leading-relaxed">This contact remains active. Related methods, addresses, consents, and histories are automatically reparented to this ID.</p>
+                          <select
+                            onChange={(e) => {
+                              // Select master
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-xs text-slate-200 focus:outline-none"
+                          >
+                            <option value="CONT-001">Caleb Kirui (CONT-001) - 85% Health [Tier A]</option>
+                            <option value="CONT-002">Mary Kamau (CONT-002) - 72% Health [Tier B]</option>
+                          </select>
+                        </div>
+
+                        <div className="bg-slate-950 p-4 border border-slate-900 rounded-xl space-y-3">
+                          <span className="text-[10px] font-mono text-rose-400 font-extrabold uppercase block border-b border-slate-900 pb-1.5">
+                            Step 2: Select Duplicate Records to Consolidate
+                          </span>
+                          <p className="text-[11px] text-slate-400 leading-relaxed">The following matches have been flagged automatically based on email similarities and levenshtein distance similarity scores.</p>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 bg-slate-900/60 p-2.5 rounded border border-slate-850">
+                              <input type="checkbox" defaultChecked className="rounded border-slate-800 bg-slate-950 text-indigo-600" />
+                              <div className="text-xs font-mono">
+                                <div className="text-slate-200 font-bold">Caleb (Duplicate) (CONT-003)</div>
+                                <div className="text-slate-500 text-[9px]">Match Confidence: 95% &bull; Matches: Email, Phone, Company</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Merged Field Consolidations Preview */}
+                      <div className="space-y-4">
+                        <div className="bg-slate-950 p-4 border border-slate-900 rounded-xl space-y-3 font-mono text-xs">
+                          <span className="text-[10px] text-indigo-400 font-extrabold uppercase block border-b border-slate-900 pb-1.5">
+                            Step 3: Fields Consolidation Review
+                          </span>
+                          
+                          <div className="space-y-2 text-[10px] leading-relaxed">
+                            <div className="flex justify-between pb-1.5 border-b border-slate-900">
+                              <span className="text-slate-500">Master Record:</span>
+                              <span className="text-slate-300">Caleb Kirui</span>
+                            </div>
+                            <div className="flex justify-between pb-1.5 border-b border-slate-900">
+                              <span className="text-slate-500">Duplicate Record(s):</span>
+                              <span className="text-slate-300">Caleb (Duplicate)</span>
+                            </div>
+                            <div className="flex justify-between pb-1.5 border-b border-slate-900">
+                              <span className="text-slate-500">Reassigned Addresses:</span>
+                              <span className="text-emerald-400">+2 Addresses consolidated</span>
+                            </div>
+                            <div className="flex justify-between pb-1.5 border-b border-slate-900">
+                              <span className="text-slate-500">Reassigned Contact Methods:</span>
+                              <span className="text-emerald-400">+1 Method mapped to master</span>
+                            </div>
+                            <div className="flex justify-between pb-1.5 border-b border-slate-900">
+                              <span className="text-slate-500">GDPR Consents Consolidated:</span>
+                              <span className="text-emerald-400">Synced to master outbox queue</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-slate-500">Event Dispatched:</span>
+                              <span className="text-indigo-400 font-bold">crm.contact.merged</span>
+                            </div>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              // Perform the merge simulation
+                              setContacts(prev => prev.filter(c => c.id !== "CONT-003"));
+                              setSelectedContactId("CONT-001");
+                              setContactViewMode("directory");
+                              triggerEventLog("crm.contact.merged", "Caleb Kirui (Consolidated 1 duplicate)");
+                              alert("✓ Merge Executed! Contact duplicate CONT-003 has been soft-deleted and all related methods, consents, and addresses have been atomically reassigned to Caleb Kirui (CONT-001).");
+                            }}
+                            className="w-full py-2 bg-indigo-600 hover:bg-indigo-5050 border border-indigo-500 text-[10px] text-white uppercase rounded text-center transition-colors font-bold"
+                          >
+                            🚀 Confirm & Execute Atomical Merge
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Sub-view 3: Import Wizard */}
+                {contactViewMode === "import" && (
+                  <div className="bg-slate-900/20 border border-slate-900 p-6 rounded-2xl space-y-6">
+                    <div>
+                      <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                        📥 Enterprise Import CSV/JSON Wizard
+                      </h4>
+                      <p className="text-xs text-slate-400">Validate incoming payload columns, analyze duplicate occurrences before applying, and support instant batch rollback.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Col 1: Pasting data */}
+                      <div className="lg:col-span-1 bg-slate-950 p-4 border border-slate-900 rounded-xl space-y-3">
+                        <span className="text-[10px] font-mono text-indigo-400 font-extrabold uppercase block border-b border-slate-900 pb-1.5">
+                          Step 1: Paste CSV / JSON Records
+                        </span>
+                        <p className="text-[10px] text-slate-500">Paste JSON structure with First/Last Name, Email, and Phone to validate.</p>
+                        <textarea
+                          defaultValue={JSON.stringify([
+                            { first_name: "James", last_name: "Mwangi", email: "james.mw@equity.co.ke", phone: "+254 711 999333" },
+                            { first_name: "Caleb", last_name: "Kirui", email: "caleb@telecom.co.ke", phone: "+254 700 111222" }
+                          ], null, 2)}
+                          rows={6}
+                          className="w-full bg-slate-900 border border-slate-800 text-[10px] p-2.5 font-mono rounded text-slate-300 focus:outline-none focus:border-indigo-500"
+                        />
+                        <button
+                          onClick={() => {
+                            alert("✓ Structural dry-run complete. Checked 2 records: \n- Row 0: Valid, No Duplicates\n- Row 1: DUPLICATE FOUND (Matches existing contact CONT-001 by Email/Phone).");
+                          }}
+                          className="w-full py-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[10px] font-bold text-indigo-400 rounded uppercase font-mono transition-colors"
+                        >
+                          🔍 Run Dry-run Validation
+                        </button>
+                      </div>
+
+                      {/* Col 2: Import Parameters and Execute */}
+                      <div className="lg:col-span-1 bg-slate-950 p-4 border border-slate-900 rounded-xl space-y-3">
+                        <span className="text-[10px] font-mono text-indigo-400 font-extrabold uppercase block border-b border-slate-900 pb-1.5">
+                          Step 2: Import Execution
+                        </span>
+                        <p className="text-[10px] text-slate-500">Configure parameters before committing records to the multi-tenant CRM tables.</p>
+                        <div className="space-y-2 text-[10px] font-mono">
+                          <label className="flex items-center gap-2">
+                            <input type="checkbox" defaultChecked className="rounded border-slate-800 bg-slate-950 text-indigo-600" />
+                            <span>Skip flagged duplicate records</span>
+                          </label>
+                          <label className="flex items-center gap-2">
+                            <input type="checkbox" defaultChecked className="rounded border-slate-800 bg-slate-950 text-indigo-600" />
+                            <span>Auto-verify contact emails</span>
+                          </label>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            // Add imported record to contacts list
+                            const newContact = {
+                              id: "CONT-IMP-99",
+                              first_name: "James",
+                              middle_name: "",
+                              last_name: "Mwangi",
+                              preferred_name: "James",
+                              email: "james.mw@equity.co.ke",
+                              phone: "+254 711 999333",
+                              job_title: "Head of Digital Channels",
+                              company_name: "Equity Bank",
+                              tier: "Tier B",
+                              segment: "Enterprise",
+                              lifecycle_stage: "SQL",
+                              status: "Active",
+                              health_score: 75,
+                              health_status: "Healthy",
+                              health_breakdown: { engagement: 5, responsiveness: 5, meeting_frequency: 5, sales_influence: 5, relationship_strength: 5, profile_completeness: 5 },
+                              custom_fields: {},
+                              addresses: [],
+                              consents: [],
+                              relationships: []
+                            };
+
+                            setContacts(prev => [...prev, newContact]);
+                            setSelectedContactId("CONT-IMP-99");
+                            triggerEventLog("crm.contact.created", "James Mwangi (Imported)");
+                            alert("✓ 1 Contact imported successfully! Row 1 (Caleb Kirui) was skipped as duplicate based on parameters.");
+                          }}
+                          className="w-full py-2 bg-indigo-600 hover:bg-indigo-550 border border-indigo-500 text-[10px] font-bold text-white rounded uppercase font-mono transition-colors"
+                        >
+                          📥 Commit Import Records
+                        </button>
+                      </div>
+
+                      {/* Col 3: Rollback Console */}
+                      <div className="lg:col-span-1 bg-slate-950 p-4 border border-slate-900 rounded-xl space-y-3">
+                        <span className="text-[10px] font-mono text-rose-400 font-extrabold uppercase block border-b border-slate-900 pb-1.5">
+                          ⏪ Import Rollback Center
+                        </span>
+                        <p className="text-[10px] text-slate-500">Every import batch creates a transaction metadata point enabling complete reversal of records in the database.</p>
+                        
+                        <div className="space-y-1.5 font-mono text-[9px]">
+                          <div className="p-2 bg-slate-900 rounded border border-slate-850 flex justify-between items-center">
+                            <div>
+                              <div className="text-slate-300 font-bold">BATCH #992 (Today)</div>
+                              <div className="text-slate-500">1 Contact Imported</div>
+                            </div>
+                            <button
+                              onClick={() => {
+                                setContacts(prev => prev.filter(c => c.id !== "CONT-IMP-99"));
+                                setSelectedContactId("CONT-001");
+                                triggerEventLog("crm.contact.deleted", "James Mwangi (Reversed Import)");
+                                alert("✓ Batch rollback completed! Reversals applied cleanly. James Mwangi (CONT-IMP-99) has been deleted from crm_contacts.");
+                              }}
+                              className="px-2 py-1 bg-rose-950/40 hover:bg-rose-950/60 text-rose-400 border border-rose-900/40 rounded uppercase font-bold text-[8px]"
+                            >
+                              Rollback
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Strongly Typed Event Log specifically for CRM contacts */}
+                <div className="bg-slate-950 p-4 border border-slate-900 rounded-xl space-y-2">
+                  <div className="flex justify-between items-center pb-2 border-b border-slate-900">
+                    <span className="text-[10px] font-mono text-emerald-400 uppercase tracking-wider font-extrabold block">
+                      ⚡ HEXAGONAL EVENT BUS LOG (crm.contact.*)
+                    </span>
+                    <span className="text-[8px] font-mono bg-emerald-950 text-emerald-400 px-1.5 py-0.5 rounded animate-pulse">
+                      EVENT_BUS ACTIVE
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 font-mono text-[9px] leading-relaxed max-h-[120px] overflow-y-auto">
+                    {outboxEvents.map((evt) => (
+                      <div key={evt.id} className="text-slate-400 flex justify-between gap-4">
+                        <div>
+                          <span className="text-emerald-500 font-bold">[DISPATCH]</span> <span className="text-slate-200 font-semibold">{evt.name}</span> &rarr; Target: <span className="text-indigo-400">{evt.target}</span>
+                        </div>
+                        <span className="text-slate-500 text-[8px]">{evt.ts}</span>
+                      </div>
+                    ))}
+                    <div className="text-slate-500 text-[8px] italic pt-1 border-t border-slate-900">
+                      * All domain contact operations dispatch strongly-typed events through EventBus, fully isolated by tenant organization limits.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }

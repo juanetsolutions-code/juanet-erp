@@ -3,38 +3,40 @@
 namespace App\Domain\CRM\Observers;
 
 use App\Domain\CRM\Models\Lead;
-use App\Domain\CRM\Events\LeadCreatedEvent;
-use App\Domain\CRM\Events\LeadUpdatedEvent;
-use App\Domain\CRM\Events\LeadDeletedEvent;
-use App\Services\EventBus\TransactionalOutboxInterface;
+use App\Domain\CRM\Events\LeadCreated;
+use App\Domain\CRM\Events\LeadUpdated;
+use App\Domain\CRM\Events\LeadDeleted;
+use App\Contracts\EventBus;
 use App\Services\Cache\TenantCacheManagerInterface;
 
 class LeadObserver
 {
-    protected TransactionalOutboxInterface $outbox;
+    protected EventBus $eventBus;
     protected TenantCacheManagerInterface $cache;
 
-    public function __construct(TransactionalOutboxInterface $outbox, TenantCacheManagerInterface $cache)
+    public function __construct(EventBus $eventBus, TenantCacheManagerInterface $cache)
     {
-        $this->outbox = $outbox;
+        $this->eventBus = $eventBus;
         $this->cache = $cache;
     }
 
     public function created(Lead $lead): void
     {
-        $this->outbox->store(new LeadCreatedEvent($lead));
+        $this->eventBus->dispatch(new LeadCreated($lead));
         $this->invalidateCache($lead);
     }
 
     public function updated(Lead $lead): void
     {
-        $this->outbox->store(new LeadUpdatedEvent($lead));
+        // Capture changes on the lead
+        $dirty = $lead->getChanges();
+        $this->eventBus->dispatch(new LeadUpdated($lead, $dirty));
         $this->invalidateCache($lead);
     }
 
     public function deleted(Lead $lead): void
     {
-        $this->outbox->store(new LeadDeletedEvent($lead));
+        $this->eventBus->dispatch(new LeadDeleted($lead));
         $this->invalidateCache($lead);
     }
 

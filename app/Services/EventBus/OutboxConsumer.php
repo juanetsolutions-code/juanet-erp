@@ -124,6 +124,6 @@ class OutboxConsumer implements OutboxConsumerInterface
         }
 
         // Fire standard Laravel event listeners
-        event($eventInstance);
+        \Illuminate\Support\Facades\Event::dispatch($eventInstance);
     }
 }

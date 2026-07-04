@@ -228,3 +228,194 @@ test('dlq replay moves event back to outbox and deletes DLQ entry', function () 
         'attempts' => 0,
     ]);
 });
+
+class TestImmediateCrmEvent extends \App\Domain\CRM\Events\CrmDomainEvent
+{
+    public function __construct(\App\Domain\CRM\Models\Lead $lead)
+    {
+        parent::__construct(
+            'test.crm.immediate',
+            'immediate',
+            $lead->organization_id,
+            'Lead',
+            $lead->id,
+            1,
+            ['some' => 'payload']
+        );
+    }
+}
+
+class TestQueuedCrmEvent extends \App\Domain\CRM\Events\CrmDomainEvent
+{
+    public function __construct(\App\Domain\CRM\Models\Lead $lead)
+    {
+        parent::__construct(
+            'test.crm.queued',
+            'queued',
+            $lead->organization_id,
+            'Lead',
+            $lead->id,
+            1,
+            ['some' => 'payload']
+        );
+    }
+}
+
+test('event bus dependency injection and contract resolution works', function () {
+    $eventBus = app(\App\Contracts\EventBus::class);
+    expect($eventBus)->toBeInstanceOf(\App\Infrastructure\Events\LaravelEventBus::class);
+});
+
+test('event bus dispatches immediate events directly and logs dispatch', function () {
+    $org = Organization::create([
+        'name' => 'Test Corp',
+        'domain' => 'test.com',
+    ]);
+    
+    $lead = \App\Domain\CRM\Models\Lead::create([
+        'organization_id' => $org->id,
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'status' => 'new',
+        'source' => 'web',
+    ]);
+
+    $triggered = false;
+    Event::listen(TestImmediateCrmEvent::class, function (TestImmediateCrmEvent $event) use (&$triggered, $org, $lead) {
+        $triggered = true;
+        expect($event->getOrganizationId())->toBe($org->id);
+        expect($event->getAggregateId())->toBe($lead->id);
+        expect($event->getEventId())->not->toBeNull();
+        expect($event->getCorrelationId())->not->toBeNull();
+    });
+
+    $event = new TestImmediateCrmEvent($lead);
+    $eventBus = app(\App\Contracts\EventBus::class);
+    $eventBus->dispatch($event);
+
+    expect($triggered)->toBeTrue();
+    $this->assertDatabaseMissing('event_outboxes', ['event_name' => 'test.crm.immediate']);
+});
+
+test('event bus enriches queued events and writes to outbox', function () {
+    $org = Organization::create([
+        'name' => 'Test Corp',
+        'domain' => 'test.com',
+    ]);
+    
+    $lead = \App\Domain\CRM\Models\Lead::create([
+        'organization_id' => $org->id,
+        'first_name' => 'Jane',
+        'last_name' => 'Doe',
+        'status' => 'new',
+        'source' => 'web',
+    ]);
+
+    $event = new TestQueuedCrmEvent($lead);
+    $eventBus = app(\App\Contracts\EventBus::class);
+    $eventBus->dispatch($event);
+
+    $this->assertDatabaseHas('event_outboxes', [
+        'event_name' => 'test.crm.queued',
+        'event_type' => 'queued',
+        'organization_id' => $org->id,
+        'status' => 'pending',
+    ]);
+
+    $outbox = EventOutbox::where('event_name', 'test.crm.queued')->first();
+    expect($outbox->payload)->toHaveKey('event_id');
+    expect($outbox->payload)->toHaveKey('correlation_id');
+    expect($outbox->payload['actor_id'])->toBe('system');
+    expect($outbox->payload['aggregate_type'])->toBe('Lead');
+    expect($outbox->payload['aggregate_id'])->toBe($lead->id);
+});
+
+test('event bus after commit dispatch triggers on commit', function () {
+    $org = Organization::create([
+        'name' => 'Test Corp',
+        'domain' => 'test.com',
+    ]);
+    
+    $lead = \App\Domain\CRM\Models\Lead::create([
+        'organization_id' => $org->id,
+        'first_name' => 'Jane',
+        'last_name' => 'Doe',
+        'status' => 'new',
+        'source' => 'web',
+    ]);
+
+    $triggered = false;
+    Event::listen(TestImmediateCrmEvent::class, function (TestImmediateCrmEvent $event) use (&$triggered) {
+        $triggered = true;
+    });
+
+    $event = new TestImmediateCrmEvent($lead);
+    $eventBus = app(\App\Contracts\EventBus::class);
+
+    \Illuminate\Support\Facades\DB::transaction(function () use ($eventBus, $event, &$triggered) {
+        $eventBus->dispatchAfterCommit($event);
+        expect($triggered)->toBeFalse(); // Should not trigger yet
+    });
+
+    expect($triggered)->toBeTrue(); // Should trigger after commit
+});
+
+test('event bus dispatchMany dispatches all events', function () {
+    $org = Organization::create([
+        'name' => 'Test Corp',
+        'domain' => 'test.com',
+    ]);
+    
+    $lead = \App\Domain\CRM\Models\Lead::create([
+        'organization_id' => $org->id,
+        'first_name' => 'Jane',
+        'last_name' => 'Doe',
+        'status' => 'new',
+        'source' => 'web',
+    ]);
+
+    $triggeredCount = 0;
+    Event::listen(TestImmediateCrmEvent::class, function (TestImmediateCrmEvent $event) use (&$triggeredCount) {
+        $triggeredCount++;
+    });
+
+    $event1 = new TestImmediateCrmEvent($lead);
+    $event2 = new TestImmediateCrmEvent($lead);
+
+    $eventBus = app(\App\Contracts\EventBus::class);
+    $eventBus->dispatchMany([$event1, $event2]);
+
+    expect($triggeredCount)->toBe(2);
+});
+
+test('correlation and causation chains are propagated across dispatches', function () {
+    $org = Organization::create([
+        'name' => 'Test Corp',
+        'domain' => 'test.com',
+    ]);
+    
+    $lead = \App\Domain\CRM\Models\Lead::create([
+        'organization_id' => $org->id,
+        'first_name' => 'Jane',
+        'last_name' => 'Doe',
+        'status' => 'new',
+        'source' => 'web',
+    ]);
+
+    $eventBus = app(\App\Contracts\EventBus::class);
+
+    $parentEvent = new TestImmediateCrmEvent($lead);
+    $eventBus->dispatch($parentEvent);
+
+    // Set parent context
+    \App\Infrastructure\Events\LaravelEventBus::setCurrentEvent($parentEvent);
+
+    $childEvent = new TestImmediateCrmEvent($lead);
+    $eventBus->dispatch($childEvent);
+
+    expect($childEvent->getCausationId())->toBe($parentEvent->getEventId());
+    expect($childEvent->getCorrelationId())->toBe($parentEvent->getCorrelationId());
+
+    // Reset parent context
+    \App\Infrastructure\Events\LaravelEventBus::setCurrentEvent(null);
+});

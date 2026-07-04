@@ -87,11 +87,26 @@ class CompanyApiController extends Controller
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
+            'trading_name' => 'nullable|string|max:255',
+            'registration_number' => 'nullable|string|max:255',
+            'tax_number' => 'nullable|string|max:255',
             'industry_id' => 'nullable|uuid|exists:crm_industries,id',
+            'industry_classification' => 'nullable|string|max:255',
+            'company_size' => 'nullable|string|max:255',
+            'annual_revenue' => 'nullable|numeric|min:0',
+            'employees_count' => 'nullable|integer|min:0',
+            'parent_id' => 'nullable|uuid|exists:crm_companies,id',
+            'status' => 'nullable|string|in:Prospect,Customer,Partner,Vendor,Inactive',
+            'user_id' => 'nullable|uuid|exists:users,id',
+            'territory' => 'nullable|string|max:255',
+            'timezone' => 'nullable|string|max:255',
+            'preferred_language' => 'nullable|string|max:50',
+            'currency' => 'nullable|string|max:10',
             'domain' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:50',
             'website' => 'nullable|string|max:255',
             'address' => 'nullable|string',
+            'social_media_profiles' => 'nullable|array',
             'custom_fields' => 'nullable|array',
         ]);
 
@@ -116,6 +131,145 @@ class CompanyApiController extends Controller
 
         return response()->json([
             'message' => 'Company deleted successfully.',
+        ]);
+    }
+
+    public function recalculateHealth(string $id): JsonResponse
+    {
+        $company = $this->service->getCompany($id);
+        if (!$company) {
+            return response()->json(['message' => 'Company not found.'], 404);
+        }
+
+        Gate::authorize('update', $company);
+
+        $score = $company->recalculateHealthScore();
+
+        return response()->json([
+            'message' => 'Company health recalculated successfully.',
+            'health_score' => $score,
+            'health_status' => $company->health_status,
+            'health_breakdown' => $company->health_breakdown,
+        ]);
+    }
+
+    public function hierarchy(string $id): JsonResponse
+    {
+        $company = $this->service->getCompany($id);
+        if (!$company) {
+            return response()->json(['message' => 'Company not found.'], 404);
+        }
+
+        Gate::authorize('view', $company);
+
+        $hierarchy = $this->service->getHierarchy($id);
+
+        return response()->json([
+            'data' => $hierarchy,
+        ]);
+    }
+
+    public function getLocations(string $id): JsonResponse
+    {
+        $company = $this->service->getCompany($id);
+        if (!$company) {
+            return response()->json(['message' => 'Company not found.'], 404);
+        }
+
+        Gate::authorize('view', $company);
+
+        $locations = $this->service->getLocations($id);
+
+        return response()->json([
+            'data' => $locations,
+        ]);
+    }
+
+    public function storeLocation(Request $request, string $id): JsonResponse
+    {
+        $company = $this->service->getCompany($id);
+        if (!$company) {
+            return response()->json(['message' => 'Company not found.'], 404);
+        }
+
+        Gate::authorize('update', $company);
+
+        $validated = $request->validate([
+            'type' => 'required|string|in:headquarters,branch,warehouse,billing,shipping',
+            'name' => 'required|string|max:255',
+            'address' => 'nullable|string',
+            'country' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'county' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:100',
+            'postal_code' => 'nullable|string|max:20',
+            'gps_coordinates' => 'nullable|string|max:100',
+            'timezone' => 'nullable|string|max:100',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:100',
+        ]);
+
+        $location = $this->service->createLocation($id, $validated);
+
+        return response()->json([
+            'message' => 'Location created successfully.',
+            'data' => $location,
+        ], 201);
+    }
+
+    public function updateLocation(Request $request, string $id, string $locationId): JsonResponse
+    {
+        $company = $this->service->getCompany($id);
+        if (!$company) {
+            return response()->json(['message' => 'Company not found.'], 404);
+        }
+
+        Gate::authorize('update', $company);
+
+        $validated = $request->validate([
+            'type' => 'sometimes|required|string|in:headquarters,branch,warehouse,billing,shipping',
+            'name' => 'sometimes|required|string|max:255',
+            'address' => 'nullable|string',
+            'country' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'county' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:100',
+            'postal_code' => 'nullable|string|max:20',
+            'gps_coordinates' => 'nullable|string|max:100',
+            'timezone' => 'nullable|string|max:100',
+            'phone' => 'nullable|string|max:50',
+            'email' => 'nullable|email|max:100',
+        ]);
+
+        $location = $this->service->updateLocation($id, $locationId, $validated);
+
+        if (!$location) {
+            return response()->json(['message' => 'Location not found.'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Location updated successfully.',
+            'data' => $location,
+        ]);
+    }
+
+    public function destroyLocation(string $id, string $locationId): JsonResponse
+    {
+        $company = $this->service->getCompany($id);
+        if (!$company) {
+            return response()->json(['message' => 'Company not found.'], 404);
+        }
+
+        Gate::authorize('update', $company);
+
+        $deleted = $this->service->deleteLocation($id, $locationId);
+
+        if (!$deleted) {
+            return response()->json(['message' => 'Location not found.'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Location deleted successfully.',
         ]);
     }
 }

@@ -3,34 +3,47 @@
 namespace App\Domain\CRM\Observers;
 
 use App\Domain\CRM\Models\Company;
-use App\Domain\CRM\Events\CompanyCreatedEvent;
-use App\Services\EventBus\TransactionalOutboxInterface;
+use App\Domain\CRM\Events\CompanyCreated;
+use App\Domain\CRM\Events\CompanyUpdated;
+use App\Domain\CRM\Events\CompanyDeleted;
+use App\Contracts\EventBus;
 use App\Services\Cache\TenantCacheManagerInterface;
 
 class CompanyObserver
 {
-    protected TransactionalOutboxInterface $outbox;
+    protected EventBus $eventBus;
     protected TenantCacheManagerInterface $cache;
 
-    public function __construct(TransactionalOutboxInterface $outbox, TenantCacheManagerInterface $cache)
+    public function __construct(EventBus $eventBus, TenantCacheManagerInterface $cache)
     {
-        $this->outbox = $outbox;
+        $this->eventBus = $eventBus;
         $this->cache = $cache;
     }
 
     public function created(Company $company): void
     {
-        $this->outbox->store(new CompanyCreatedEvent($company));
+        $this->eventBus->dispatch(new CompanyCreated($company));
         $this->invalidateCache($company);
     }
 
     public function updated(Company $company): void
     {
+        $this->eventBus->dispatch(new CompanyUpdated($company));
+
+        if ($company->wasChanged('health_score')) {
+            $oldScore = (int) $company->getOriginal('health_score');
+            $newScore = (int) $company->health_score;
+            if ($newScore < $oldScore) {
+                $this->eventBus->dispatch(new \App\Domain\CRM\Events\CompanyHealthDeterioratedEvent($company, $oldScore, $newScore));
+            }
+        }
+
         $this->invalidateCache($company);
     }
 
     public function deleted(Company $company): void
     {
+        $this->eventBus->dispatch(new CompanyDeleted($company));
         $this->invalidateCache($company);
     }
 
