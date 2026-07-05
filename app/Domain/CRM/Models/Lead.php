@@ -25,17 +25,20 @@ class Lead extends Model implements SearchableInterface
         'company_id',
         'contact_id',
         'lead_source_id',
+        'visitor_id',
         'user_id',
         'name',
         'email',
         'phone',
         'status',
         'custom_fields',
+        'crm_lead_metadata',
         'lock_version',
     ];
 
     protected $casts = [
         'custom_fields' => 'array',
+        'crm_lead_metadata' => 'array',
         'lock_version' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -60,6 +63,11 @@ class Lead extends Model implements SearchableInterface
     public function leadSource(): BelongsTo
     {
         return $this->belongsTo(LeadSource::class, 'lead_source_id');
+    }
+
+    public function visitor(): BelongsTo
+    {
+        return $this->belongsTo(Visitor::class, 'visitor_id');
     }
 
     public function owner(): BelongsTo

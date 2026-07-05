@@ -18,7 +18,10 @@ class PublicLeadDto
         public readonly array $utm_fields = [],
         public readonly ?string $referrer = null,
         public readonly ?string $user_agent = null,
-        public readonly ?string $ip_address = null
+        public readonly ?string $ip_address = null,
+        public readonly ?string $landing_page = null,
+        public readonly ?string $exit_page = null,
+        public readonly ?string $session_id = null
     ) {}
 
     /**
@@ -35,6 +38,14 @@ class PublicLeadDto
             }
         }
 
+        // Try to retrieve session ID safely without crashing if session is disabled/uninitialized
+        $sessionId = null;
+        try {
+            $sessionId = $request->input('session_id') ?? ($request->hasSession() ? $request->session()->getId() : null);
+        } catch (\Throwable $e) {
+            // Safe fallback
+        }
+
         return new self(
             name: strip_tags($request->input('name')),
             email: strip_tags($request->input('email')),
@@ -47,7 +58,10 @@ class PublicLeadDto
             utm_fields: $utmFields,
             referrer: $request->header('referer') ?? $request->input('referrer'),
             user_agent: $request->userAgent(),
-            ip_address: $request->ip()
+            ip_address: $request->ip(),
+            landing_page: strip_tags($request->input('landing_page') ?? $request->input('url')),
+            exit_page: strip_tags($request->input('exit_page')),
+            session_id: $sessionId
         );
     }
 
@@ -69,6 +83,9 @@ class PublicLeadDto
             'referrer' => $this->referrer,
             'user_agent' => $this->user_agent,
             'ip_address' => $this->ip_address,
+            'landing_page' => $this->landing_page,
+            'exit_page' => $this->exit_page,
+            'session_id' => $this->session_id,
         ];
     }
 }

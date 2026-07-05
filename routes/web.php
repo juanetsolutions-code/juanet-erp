@@ -25,9 +25,14 @@ Route::get('/services', function () {
     return view('services');
 })->name('services');
 
-Route::get('/marketplace', function () {
-    return view('marketplace');
-})->name('marketplace');
+use App\Http\Controllers\MarketplaceController;
+use App\Http\Controllers\MarketplaceSearchController;
+
+Route::get('/marketplace', [MarketplaceController::class, 'index'])->name('marketplace');
+Route::get('/marketplace/search', [MarketplaceSearchController::class, 'search'])->name('marketplace.search');
+Route::get('/marketplace/category/{slug}', [MarketplaceController::class, 'categoryShow'])->name('marketplace.category');
+Route::get('/marketplace/product/{slug}', [MarketplaceController::class, 'productShow'])->name('marketplace.product');
+Route::post('/api/marketplace/track', [MarketplaceController::class, 'trackEvent'])->name('marketplace.track');
 
 Route::get('/portfolio', function () {
     return view('portfolio');

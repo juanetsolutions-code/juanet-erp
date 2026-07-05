@@ -145,7 +145,27 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/{id}/complete', [\App\Domain\CRM\Controllers\Api\ActivityApiController::class, 'complete']);
         });
         Route::apiResource('crm/activities', \App\Domain\CRM\Controllers\Api\ActivityApiController::class);
+
+        // CRM Visitor Intelligence Analytics routes (GDPR and isolation-aware)
+        Route::prefix('crm/visitor-intelligence')->group(function () {
+            Route::get('/analytics', [\App\Http\Controllers\Api\VisitorCrmController::class, 'analytics']);
+            Route::get('/timeline/{visitor_id}', [\App\Http\Controllers\Api\VisitorCrmController::class, 'timeline']);
+            Route::get('/visitors', [\App\Http\Controllers\Api\VisitorCrmController::class, 'index']);
+            Route::post('/gdpr/anonymize', [\App\Http\Controllers\Api\VisitorCrmController::class, 'anonymize']);
+            Route::post('/gdpr/delete', [\App\Http\Controllers\Api\VisitorCrmController::class, 'delete']);
+            Route::get('/gdpr/export/{visitor_id}', [\App\Http\Controllers\Api\VisitorCrmController::class, 'export']);
+        });
     });
+});
+
+// Public Visitor Intelligence tracking routes
+Route::prefix('public/visitors')->group(function () {
+    Route::post('/track', [\App\Http\Controllers\Api\VisitorTrackingController::class, 'track'])
+        ->middleware(['tenant']);
+    Route::post('/cta', [\App\Http\Controllers\Api\VisitorTrackingController::class, 'trackCta'])
+        ->middleware(['tenant']);
+    Route::post('/end-session', [\App\Http\Controllers\Api\VisitorTrackingController::class, 'endSession'])
+        ->middleware(['tenant']);
 });
 
 // Safaricom Lipa Na M-PESA Webhook Callback
@@ -183,6 +203,12 @@ Route::prefix('leads')->group(function () {
 // Public Lead Capture API (unauthenticated, rate limited, tenant aware)
 Route::post('/public/leads', [\App\Http\Controllers\Api\PublicLeadController::class, 'store'])
     ->middleware(['throttle:10,1', 'tenant']);
+
+// Public Marketplace API routes
+Route::prefix('marketplace')->group(function () {
+    Route::get('/search', [\App\Http\Controllers\MarketplaceSearchController::class, 'search']);
+    Route::post('/newsletter', [\App\Http\Controllers\MarketplaceNewsletterController::class, 'subscribe']);
+});
 
 // Signed temporary file download endpoint (public via HMAC check)
 Route::get('/files/{id}/download-signed', [FileController::class, 'downloadSigned'])->name('api.files.download-signed');

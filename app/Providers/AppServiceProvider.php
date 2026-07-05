@@ -88,6 +88,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Domain\CRM\Contracts\PipelineRepositoryInterface::class, \App\Domain\CRM\Repositories\PipelineRepository::class);
         $this->app->bind(\App\Domain\CRM\Contracts\OpportunityRepositoryInterface::class, \App\Domain\CRM\Repositories\OpportunityRepository::class);
 
+        // Bind Marketplace Repositories
+        $this->app->bind(\App\Domain\Marketplace\Contracts\MarketplaceProductRepositoryInterface::class, \App\Domain\Marketplace\Repositories\MarketplaceProductRepository::class);
+        $this->app->bind(\App\Domain\Marketplace\Contracts\MarketplaceCategoryRepositoryInterface::class, \App\Domain\Marketplace\Repositories\MarketplaceCategoryRepository::class);
+
         // Bind Shared Kernel Money Value Object Formatter
         $this->app->bind(\App\Domain\Shared\Contracts\MoneyFormatter::class, \App\Domain\Shared\Services\LocaleMoneyFormatter::class);
     }

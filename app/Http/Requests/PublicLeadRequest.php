@@ -39,6 +39,16 @@ class PublicLeadRequest extends FormRequest
             'utm_campaign' => 'nullable|string|max:255',
             'utm_term' => 'nullable|string|max:255',
             'utm_content' => 'nullable|string|max:255',
+
+            // Anti-spam & tracking fields
+            'honeypot' => 'nullable|string',
+            'hp_field' => 'nullable|string',
+            'form_timestamp' => 'nullable|string',
+            'turnstile_token' => 'nullable|string',
+            'cf-turnstile-response' => 'nullable|string',
+            'landing_page' => 'nullable|string|max:2048',
+            'exit_page' => 'nullable|string|max:2048',
+            'session_id' => 'nullable|string|max:255',
         ];
     }
 }
