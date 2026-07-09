@@ -4,7 +4,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\OrganizationController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\NotificationController;
+use App\Domain\Notification\Http\Controllers\NotificationController;
+use App\Domain\Notification\Http\Controllers\NotificationPreferenceController;
 use App\Http\Controllers\FileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -44,8 +45,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [NotificationController::class, 'index']);
         Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
         Route::post('/read-all', [NotificationController::class, 'markAllAsRead']);
-        Route::get('/preferences', [NotificationController::class, 'getPreferences']);
-        Route::put('/preferences', [NotificationController::class, 'updatePreferences']);
+        Route::post('/{id}/archive', [NotificationController::class, 'archive']);
+        Route::delete('/{id}', [NotificationController::class, 'destroy']);
+        Route::get('/preferences', [NotificationPreferenceController::class, 'index']);
+        Route::put('/preferences', [NotificationPreferenceController::class, 'update']);
         Route::post('/trigger-test', [NotificationController::class, 'triggerTest']);
     });
 
@@ -155,6 +158,52 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/gdpr/delete', [\App\Http\Controllers\Api\VisitorCrmController::class, 'delete']);
             Route::get('/gdpr/export/{visitor_id}', [\App\Http\Controllers\Api\VisitorCrmController::class, 'export']);
         });
+
+        // Workforce Bounded Context API Routes
+        Route::prefix('workforce')->group(function () {
+            Route::get('/planner', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'getPlanner']);
+            Route::get('/profiles', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'getProfiles']);
+            Route::post('/profiles', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'createProfile']);
+            
+            Route::get('/skills', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'getSkills']);
+            Route::post('/skills', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'createSkill']);
+            Route::post('/skills/assign', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'addSkillToEmployee']);
+
+            Route::get('/teams', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'getTeams']);
+            Route::post('/teams', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'createTeam']);
+            Route::get('/departments', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'getDepartments']);
+            Route::post('/departments', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'createDepartment']);
+            Route::post('/positions', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'createPosition']);
+
+            Route::post('/assignments', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'createAssignment']);
+            Route::delete('/assignments/{id}', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'removeAssignment']);
+            Route::patch('/assignments/{id}/workload', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'updateAssignmentWorkload']);
+
+            Route::post('/time/start', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'startTimer']);
+            Route::post('/time/{id}/stop', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'stopTimer']);
+            Route::post('/time/manual', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'logTimeManual']);
+            Route::get('/time/summary', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'getTimeSummary']);
+
+            Route::post('/leave', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'requestLeave']);
+            Route::post('/leave/{id}/approve', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'approveLeave']);
+            Route::post('/leave/{id}/reject', [\App\Domain\Workforce\Controllers\WorkforceController::class, 'rejectLeave']);
+        });
+
+        // Finance & Billing Domain API Resources
+        Route::prefix('finance')->group(function () {
+            Route::get('/dashboard', [\App\Domain\Finance\Controllers\Api\FinanceApiController::class, 'dashboard']);
+            Route::get('/ledger', [\App\Domain\Finance\Controllers\Api\FinanceApiController::class, 'ledger']);
+            Route::get('/invoices', [\App\Domain\Finance\Controllers\Api\FinanceApiController::class, 'invoices']);
+            Route::post('/invoices', [\App\Domain\Finance\Controllers\Api\FinanceApiController::class, 'createInvoice']);
+            Route::post('/invoices/{id}/pay', [\App\Domain\Finance\Controllers\Api\FinanceApiController::class, 'payInvoice']);
+            Route::post('/estimates/{id}/convert', [\App\Domain\Finance\Controllers\Api\FinanceApiController::class, 'convertEstimate']);
+            Route::get('/estimates', [\App\Domain\Finance\Controllers\Api\FinanceApiController::class, 'estimates']);
+            Route::get('/expenses', [\App\Domain\Finance\Controllers\Api\FinanceApiController::class, 'expenses']);
+            Route::post('/expenses', [\App\Domain\Finance\Controllers\Api\FinanceApiController::class, 'createExpense']);
+            Route::get('/recurring', [\App\Domain\Finance\Controllers\Api\FinanceApiController::class, 'recurring']);
+            Route::post('/recurring/process', [\App\Domain\Finance\Controllers\Api\FinanceApiController::class, 'processRecurring']);
+            Route::get('/reports', [\App\Domain\Finance\Controllers\Api\FinanceApiController::class, 'getReport']);
+        });
     });
 });
 
@@ -208,6 +257,28 @@ Route::post('/public/leads', [\App\Http\Controllers\Api\PublicLeadController::cl
 Route::prefix('marketplace')->group(function () {
     Route::get('/search', [\App\Http\Controllers\MarketplaceSearchController::class, 'search']);
     Route::post('/newsletter', [\App\Http\Controllers\MarketplaceNewsletterController::class, 'subscribe']);
+
+    Route::get('/cart', [\App\Http\Controllers\MarketplaceCartController::class, 'index']); // Or should be API specific? The user asked for /api/cart
+});
+
+Route::prefix('api/cart')->group(function () {
+    Route::get('/', [MarketplaceCartController::class, 'getCart']);
+    Route::post('/add', [MarketplaceCartController::class, 'add']);
+    Route::patch('/update', [MarketplaceCartController::class, 'update']);
+    Route::delete('/remove', [MarketplaceCartController::class, 'remove']);
+    Route::delete('/clear', [MarketplaceCartController::class, 'clear']);
+});
+
+Route::prefix('api/wishlist')->group(function () {
+    Route::post('/add', [WishlistController::class, 'add']);
+    Route::delete('/remove', [WishlistController::class, 'remove']);
+    Route::post('/move-to-cart', [WishlistController::class, 'moveToCart']);
+});
+
+Route::prefix('api/compare')->group(function () {
+    Route::post('/add', [CompareController::class, 'add']);
+    Route::delete('/remove', [CompareController::class, 'remove']);
+    Route::delete('/clear', [CompareController::class, 'clear']);
 });
 
 // Signed temporary file download endpoint (public via HMAC check)

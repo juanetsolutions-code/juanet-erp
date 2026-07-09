@@ -1,0 +1,47 @@
+# ==============================================================================
+# JUANET EOS ENTERPRISE LOCAL DEVELOPMENT RUNTIME (PHP 8.4-FPM)
+# ==============================================================================
+
+FROM php:8.4-fpm-alpine AS dev
+
+# Install official extension installer tool
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+
+# Install development system utilities and required PHP extensions
+RUN chmod +x /usr/local/bin/install-php-extensions && \
+    apk add --no-cache \
+        bash \
+        curl \
+        git \
+        unzip \
+        nodejs \
+        npm \
+        tzdata && \
+    install-php-extensions \
+        bcmath \
+        exif \
+        gd \
+        intl \
+        opcache \
+        pcntl \
+        pdo_pgsql \
+        pgsql \
+        redis \
+        zip
+
+# Copy latest Composer binary
+COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
+
+# Configure dedicated non-root application user using Alpine-native commands
+RUN addgroup -g 1000 -S juanet && \
+    adduser -G www-data -u 1000 -h /home/juanet -D -S juanet && \
+    mkdir -p /home/juanet/.composer && \
+    chown -R juanet:www-data /home/juanet
+
+WORKDIR /var/www/html
+
+USER juanet
+
+EXPOSE 9000
+
+CMD ["php-fpm"]

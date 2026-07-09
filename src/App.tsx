@@ -54,6 +54,7 @@ import {
   Download,
   Tag,
   FileText,
+  FileSpreadsheet,
   UserCheck,
   Phone,
   Video,
@@ -74,6 +75,9 @@ import {
   TableSchema,
   ApiEndpoint
 } from "./data/architectureData";
+
+import WorkforceTab from "./components/WorkforceTab";
+import FinanceTab from "./components/FinanceTab";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>("dashboard");
@@ -195,8 +199,10 @@ We show how the application of clean RLS policies tied to JWT auth claims simpli
             <SidebarButton active={activeTab === "api"} icon={<Code size={16} />} label="Express API Router" onClick={() => setActiveTab("api")} />
             <SidebarButton active={activeTab === "auth"} icon={<Lock size={16} />} label="RBAC Staff Security" onClick={() => setActiveTab("auth")} />
             <SidebarButton active={activeTab === "crm"} icon={<Activity size={16} />} label="CRM Activities & Timeline" onClick={() => setActiveTab("crm")} />
+            <SidebarButton active={activeTab === "workforce"} icon={<Users size={16} />} label="Workforce & Collaboration" onClick={() => setActiveTab("workforce")} />
             <SidebarButton active={activeTab === "messaging"} icon={<MessageSquare size={16} />} label="Messaging & File Vault" onClick={() => setActiveTab("messaging")} />
             <SidebarButton active={activeTab === "payments"} icon={<CreditCard size={16} />} label="Enterprise Payments Hub" onClick={() => setActiveTab("payments")} />
+            <SidebarButton active={activeTab === "finance"} icon={<FileSpreadsheet size={16} />} label="Enterprise Finance Core" onClick={() => setActiveTab("finance")} />
             <SidebarButton active={activeTab === "blog"} icon={<BookOpen size={16} />} label="SEO Blog CMS" onClick={() => setActiveTab("blog")} />
             <SidebarButton active={activeTab === "deployment"} icon={<Settings size={16} />} label="Admin Integrations" onClick={() => setActiveTab("deployment")} />
             <SidebarButton active={activeTab === "copilot"} icon={<Bot size={16} />} label="SaaS Architect Co-Pilot" onClick={() => setActiveTab("copilot")} />
@@ -244,6 +250,7 @@ We show how the application of clean RLS policies tied to JWT auth claims simpli
               {activeTab === "api" && <ApiTab copiedText={copiedText} handleCopy={handleCopy} />}
               {activeTab === "auth" && <AuthTab />}
               {activeTab === "crm" && <CrmActivitiesTab />}
+              {activeTab === "workforce" && <WorkforceTab />}
               {activeTab === "messaging" && (
                 <MessagingTab
                   projectFiles={projectFiles}
@@ -265,6 +272,9 @@ We show how the application of clean RLS policies tied to JWT auth claims simpli
                     setPrefilledInvoiceId("");
                   }}
                 />
+              )}
+              {activeTab === "finance" && (
+                <FinanceTab />
               )}
               {activeTab === "blog" && (
                 <BlogTab 
@@ -3379,6 +3389,57 @@ function CrmActivitiesTab() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
 
+  // Signature canvas states
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [sigType, setSigType] = useState<"typed" | "drawn">("typed");
+  const [typedName, setTypedName] = useState("Alice Wanjiru");
+  const [commentsInput, setCommentsInput] = useState("");
+
+  // Proposals & Contracts State
+  const [proposalViewMode, setProposalViewMode] = useState<"list" | "create" | "review">("list");
+  const [selectedProposalId, setSelectedProposalId] = useState<string>("PROP-001");
+  const [proposals, setProposals] = useState<any[]>([
+    {
+      id: "PROP-001",
+      title: "SaaS Enterprise Core Architecture & Security Hardening",
+      clientName: "Alice Wanjiru (Apex Digital)",
+      status: "sent",
+      totalAmount: 48000,
+      expiresAt: "2026-08-05",
+      sections: [
+        { title: "1. Executive Summary", content: "JUANET Enterprise proposes a secure, containerized digital backbone with decoupled microservices and standard tenant boundary policies." },
+        { title: "2. Technical Scope", content: "Implementation of multi-tenant routing, transactional outbox patterns, and an isolated CRM pipeline database schema." },
+        { title: "3. Delivery Timeline", content: "Completed across 3 discrete agile sprints spanning 30 business days with high-availability cluster deployments." }
+      ],
+      items: [
+        { description: "Enterprise Digital Backbone Core Deployment", quantity: 1, unit_price: 32000 },
+        { description: "Cloud Systems Architecture & Security Hardening", quantity: 1, unit_price: 16000 }
+      ],
+      comments: [
+        { id: "C1", user: "Alice Wanjiru (Client)", text: "Could we confirm if the multi-tenant PostgreSQL schema isolates indexes by company tenant?", date: "1 hour ago" },
+        { id: "C2", user: "Lead Architect (JUANET)", text: "Yes Alice, every table schema has composite indexes with 'organization_id' and queries are gated at row-level security.", date: "45 mins ago" }
+      ],
+      revisions: [
+        { version: 1, notes: "Initial Scope Proposal", date: "2 hours ago" }
+      ],
+      signature: null
+    }
+  ]);
+
+  // Create form state
+  const [newPropTitle, setNewPropTitle] = useState<string>("Enterprise ERP Integration & Custom API Gateway");
+  const [newPropClient, setNewPropClient] = useState<string>("James Mwangi (Equity Bank)");
+  const [newPropExpires, setNewPropExpires] = useState<string>("2026-08-15");
+  const [newPropSections, setNewPropSections] = useState<any[]>([
+    { title: "1. Executive Summary", content: "Custom high-throughput API gateway implementation integrated with core bank ledgers." },
+    { title: "2. Terms & SLA", content: "99.99% core transaction gateway availability guarantee with continuous health telemetry." }
+  ]);
+  const [newPropItems, setNewPropItems] = useState<any[]>([
+    { description: "Custom Bank API Gateway & Security Shield", quantity: 1, unit_price: 25000 },
+    { description: "Oracle Database Schema Reconciliation Adapter", quantity: 1, unit_price: 15000 }
+  ]);
+
   // Enterprise Contacts State & Wizards
   const [contactViewMode, setContactViewMode] = useState<string>("directory"); // directory, profile, merge, import
   const [selectedContactId, setSelectedContactId] = useState<string>("CONT-001");
@@ -4210,6 +4271,14 @@ function CrmActivitiesTab() {
               }`}
             >
               <UserCheck size={14} /> Enterprise Contacts
+            </button>
+            <button
+              onClick={() => setActiveTab("proposals")}
+              className={`px-4 py-2 rounded-lg text-xs font-semibold font-mono uppercase transition-all flex items-center gap-1.5 ${
+                activeTab === "proposals" ? "bg-indigo-600 text-white font-extrabold" : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <FileCode size={14} /> Proposals & e-Contracts
             </button>
           </div>
 
@@ -5863,6 +5932,641 @@ function CrmActivitiesTab() {
                         </div>
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* VIEW 7: Proposals, Quotations & e-Contracts Bounded Context */}
+                {activeTab === "proposals" && (
+                  <div className="space-y-6">
+                    {/* Header */}
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900/40 p-5 rounded-xl border border-slate-900">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="bg-indigo-500/10 text-indigo-400 text-[9px] font-mono border border-indigo-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+                            Phase F5.3 Bounded Context
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-bold text-white font-mono uppercase tracking-wider flex items-center gap-2">
+                          📋 Client Proposal & e-Sign Contract Engine
+                        </h3>
+                        <p className="text-[11px] text-slate-400 mt-1">Draft, version-control, negotiate, and legally bind enterprise agreements using electronic signatures.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        {proposalViewMode === "list" && (
+                          <button
+                            onClick={() => setProposalViewMode("create")}
+                            className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-550 border border-indigo-500 text-[10px] font-bold text-white rounded uppercase font-mono transition-colors"
+                          >
+                            + Draft New Proposal
+                          </button>
+                        )}
+                        {proposalViewMode !== "list" && (
+                          <button
+                            onClick={() => setProposalViewMode("list")}
+                            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-[10px] font-bold text-slate-400 rounded uppercase font-mono transition-colors"
+                          >
+                            &larr; Back to List
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* SUB-VIEW A: List of Proposals */}
+                    {proposalViewMode === "list" && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {proposals.map((prop) => (
+                            <div key={prop.id} className="p-5 bg-slate-900/20 border border-slate-900 rounded-xl space-y-4 hover:border-slate-800 transition-all">
+                              <div className="flex justify-between items-start">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[9px] font-mono bg-slate-950 text-slate-500 px-1.5 py-0.5 rounded border border-slate-900 font-bold">
+                                      {prop.id}
+                                    </span>
+                                    <span className={`text-[8px] font-mono font-bold uppercase px-2 py-0.5 rounded-full ${
+                                      prop.status === "draft" ? "bg-slate-900 text-slate-400 border border-slate-800" :
+                                      prop.status === "sent" ? "bg-indigo-950 text-indigo-400 border border-indigo-900" :
+                                      prop.status === "signed" ? "bg-emerald-950 text-emerald-400 border border-emerald-900" :
+                                      prop.status === "converted" ? "bg-teal-950 text-teal-400 border border-teal-900" : "bg-rose-950 text-rose-400 border border-rose-900"
+                                    }`}>
+                                      {prop.status}
+                                    </span>
+                                  </div>
+                                  <h4 className="text-xs font-bold text-white leading-snug">{prop.title}</h4>
+                                  <p className="text-[10px] text-slate-400 font-mono">Recipient: <span className="text-indigo-400">{prop.clientName}</span></p>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-[9px] font-mono text-slate-500 block uppercase">BID VALUE</span>
+                                  <span className="text-sm font-extrabold font-mono text-emerald-400">${prop.totalAmount.toLocaleString()}</span>
+                                </div>
+                              </div>
+
+                              <div className="flex justify-between items-center pt-3 border-t border-slate-900 text-[10px]">
+                                <span className="text-slate-500 font-mono">Expires: {prop.expiresAt}</span>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedProposalId(prop.id);
+                                      setProposalViewMode("review");
+                                    }}
+                                    className="px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/35 text-indigo-400 border border-indigo-900/50 rounded uppercase font-mono font-bold transition-all text-[9px]"
+                                  >
+                                    Review & Sign Portal
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SUB-VIEW B: Create Draft Form */}
+                    {proposalViewMode === "create" && (
+                      <div className="bg-slate-900/10 p-5 rounded-xl border border-slate-900 space-y-6">
+                        <div className="space-y-4">
+                          <h4 className="text-xs font-bold text-slate-300 uppercase font-mono border-b border-slate-900 pb-2">
+                            1. Metadata configuration
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-mono text-slate-500 uppercase font-bold block">Proposal Document Title</label>
+                              <input
+                                type="text"
+                                value={newPropTitle}
+                                onChange={(e) => setNewPropTitle(e.target.value)}
+                                className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-xs text-white"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-mono text-slate-500 uppercase block font-bold">Payer Recipient Client</label>
+                              <select
+                                value={newPropClient}
+                                onChange={(e) => setNewPropClient(e.target.value)}
+                                className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-xs text-white"
+                              >
+                                <option value="Alice Wanjiru (Apex Digital)">Alice Wanjiru (Apex Digital)</option>
+                                <option value="James Mwangi (Equity Bank)">James Mwangi (Equity Bank)</option>
+                                <option value="Sarah Kemunto (Safiri Express)">Sarah Kemunto (Safiri Express)</option>
+                              </select>
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[9px] font-mono text-slate-500 uppercase block font-bold">Validity/Expiration Constraint</label>
+                              <input
+                                type="date"
+                                value={newPropExpires}
+                                onChange={(e) => setNewPropExpires(e.target.value)}
+                                className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-xs text-white font-mono"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Sections list */}
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center border-b border-slate-900 pb-2">
+                            <h4 className="text-xs font-bold text-slate-300 uppercase font-mono">
+                              2. Custom Proposal Document Sections
+                            </h4>
+                            <button
+                              onClick={() => setNewPropSections([...newPropSections, { title: "New Section Title", content: "" }])}
+                              className="text-[10px] text-indigo-400 font-mono hover:underline font-bold"
+                            >
+                              + Add Scope Section Block
+                            </button>
+                          </div>
+                          <div className="space-y-3">
+                            {newPropSections.map((sec, idx) => (
+                              <div key={idx} className="p-3 bg-slate-950 rounded border border-slate-900 relative space-y-2">
+                                <button
+                                  onClick={() => setNewPropSections(newPropSections.filter((_, sidx) => sidx !== idx))}
+                                  className="absolute top-2 right-2 text-rose-500 hover:text-rose-400 text-xs"
+                                >
+                                  &times;
+                                </button>
+                                <input
+                                  type="text"
+                                  value={sec.title}
+                                  onChange={(e) => {
+                                    const updated = [...newPropSections];
+                                    updated[idx].title = e.target.value;
+                                    setNewPropSections(updated);
+                                  }}
+                                  className="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-xs text-white font-semibold font-mono"
+                                  placeholder="e.g. 1. Technical Architecture"
+                                />
+                                <textarea
+                                  value={sec.content}
+                                  onChange={(e) => {
+                                    const updated = [...newPropSections];
+                                    updated[idx].content = e.target.value;
+                                    setNewPropSections(updated);
+                                  }}
+                                  rows={2}
+                                  className="w-full bg-slate-900 border border-slate-800 rounded p-1.5 text-xs text-slate-300"
+                                  placeholder="Detailed section narrative content goes here..."
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Quote items table */}
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center border-b border-slate-900 pb-2">
+                            <h4 className="text-xs font-bold text-slate-300 uppercase font-mono">
+                              3. Quotation Line Items & Estimates
+                            </h4>
+                            <button
+                              onClick={() => setNewPropItems([...newPropItems, { description: "", quantity: 1, unit_price: 0 }])}
+                              className="text-[10px] text-indigo-400 font-mono hover:underline font-bold"
+                            >
+                              + Add Line Item Row
+                            </button>
+                          </div>
+                          <table className="min-w-full divide-y divide-slate-900 text-[10px] font-mono text-left">
+                            <thead>
+                              <tr className="text-slate-500 uppercase">
+                                <th className="py-2">Description</th>
+                                <th className="py-2 w-20 text-right">Qty</th>
+                                <th className="py-2 w-28 text-right">Unit Price ($)</th>
+                                <th className="py-2 w-28 text-right font-bold">Total ($)</th>
+                                <th className="py-2 w-10 text-center"></th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-900">
+                              {newPropItems.map((item, idx) => (
+                                <tr key={idx} className="text-slate-300">
+                                  <td className="py-2">
+                                    <input
+                                      type="text"
+                                      value={item.description}
+                                      onChange={(e) => {
+                                        const updated = [...newPropItems];
+                                        updated[idx].description = e.target.value;
+                                        setNewPropItems(updated);
+                                      }}
+                                      className="w-full bg-slate-950 border border-slate-850 rounded p-1 text-[10px] text-white"
+                                      placeholder="Service block description..."
+                                    />
+                                  </td>
+                                  <td className="py-2 text-right">
+                                    <input
+                                      type="number"
+                                      value={item.quantity}
+                                      onChange={(e) => {
+                                        const updated = [...newPropItems];
+                                        updated[idx].quantity = parseFloat(e.target.value || "0");
+                                        setNewPropItems(updated);
+                                      }}
+                                      className="w-16 bg-slate-950 border border-slate-850 rounded p-1 text-[10px] text-white text-right"
+                                    />
+                                  </td>
+                                  <td className="py-2 text-right">
+                                    <input
+                                      type="number"
+                                      value={item.unit_price}
+                                      onChange={(e) => {
+                                        const updated = [...newPropItems];
+                                        updated[idx].unit_price = parseFloat(e.target.value || "0");
+                                        setNewPropItems(updated);
+                                      }}
+                                      className="w-24 bg-slate-950 border border-slate-850 rounded p-1 text-[10px] text-white text-right"
+                                    />
+                                  </td>
+                                  <td className="py-2 text-right text-emerald-400 font-bold align-middle">
+                                    ${(item.quantity * item.unit_price).toLocaleString()}
+                                  </td>
+                                  <td className="py-2 text-center align-middle">
+                                    <button
+                                      onClick={() => setNewPropItems(newPropItems.filter((_, iidx) => iidx !== idx))}
+                                      className="text-rose-500 hover:text-rose-400 font-bold text-xs"
+                                    >
+                                      &times;
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+
+                          <div className="flex justify-end pt-3 border-t border-slate-900">
+                            <div className="text-right">
+                              <span className="text-[9px] text-slate-500 block">TOTAL AGGREGATED QUOTATION VALUE</span>
+                              <span className="text-xl font-bold font-mono text-emerald-400">
+                                ${newPropItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0).toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Submit */}
+                        <div className="flex justify-end gap-2 pt-4 border-t border-slate-900">
+                          <button
+                            onClick={() => setProposalViewMode("list")}
+                            className="px-4 py-2 bg-slate-950 hover:bg-slate-900 border border-slate-850 text-xs font-bold text-slate-400 rounded uppercase font-mono"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => {
+                              const calcTotal = newPropItems.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
+                              const newObj = {
+                                id: "PROP-00" + (proposals.length + 1),
+                                title: newPropTitle,
+                                clientName: newPropClient,
+                                status: "draft",
+                                totalAmount: calcTotal,
+                                expiresAt: newPropExpires,
+                                sections: newPropSections,
+                                items: newPropItems,
+                                comments: [],
+                                revisions: [{ version: 1, notes: "Initial drafting setup completed.", date: "Just now" }],
+                                signature: null
+                              };
+                              setProposals([newObj, ...proposals]);
+                              setProposalViewMode("list");
+                              triggerEventLog("crm.proposal.created", `${newPropTitle} (${newPropClient})`);
+                              alert("✓ Proposal draft created! Strongly-typed event 'crm.proposal.created' dispatched through transaction outbox.");
+                            }}
+                            className="px-5 py-2 bg-indigo-600 hover:bg-indigo-550 border border-indigo-500 text-xs font-bold text-white rounded uppercase font-mono"
+                          >
+                            Compile Draft & Dispatch Event
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* SUB-VIEW C: Client Review Portal */}
+                    {proposalViewMode === "review" && (() => {
+                      const prop = proposals.find(p => p.id === selectedProposalId) || proposals[0];
+                      return (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                          
+                          {/* Document View Pane */}
+                          <div className="lg:col-span-2 space-y-6">
+                            <div className="bg-slate-950 p-6 rounded-2xl border border-slate-900 space-y-6">
+                              <div className="flex justify-between items-center pb-4 border-b border-slate-900">
+                                <div>
+                                  <span className="text-[9px] font-mono text-indigo-400 uppercase font-bold tracking-wider">
+                                    Official Legal Agreement Frame
+                                  </span>
+                                  <h4 className="text-sm font-bold text-white mt-0.5">{prop.title}</h4>
+                                </div>
+                                <span className="bg-indigo-950 text-indigo-400 text-[9px] font-mono border border-indigo-900 px-2 py-0.5 rounded font-bold uppercase">
+                                  {prop.status}
+                                </span>
+                              </div>
+
+                              {/* Sections */}
+                              <div className="space-y-5 text-xs text-slate-300 leading-relaxed font-sans max-h-[350px] overflow-y-auto pr-2">
+                                {prop.sections.map((sec: any, idx: number) => (
+                                  <div key={idx} className="space-y-2">
+                                    <h5 className="font-bold text-white border-b border-slate-900 pb-1 font-mono uppercase text-[10px] tracking-wider text-indigo-400">{sec.title}</h5>
+                                    <p className="whitespace-pre-line text-slate-400">{sec.content}</p>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Line Items Table */}
+                              <div className="pt-4 border-t border-slate-900 space-y-3">
+                                <h5 className="text-[10px] font-bold uppercase text-slate-500 font-mono tracking-wider">Itemized Project Quotation</h5>
+                                <table className="min-w-full text-[10px] font-mono text-left">
+                                  <thead>
+                                    <tr className="text-slate-500">
+                                      <th className="py-1">Description</th>
+                                      <th className="py-1 text-right">Qty</th>
+                                      <th className="py-1 text-right">Unit Price ($)</th>
+                                      <th className="py-1 text-right">Subtotal ($)</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-900">
+                                    {prop.items.map((item: any, idx: number) => (
+                                      <tr key={idx} className="text-slate-300">
+                                        <td className="py-2 text-slate-400 font-medium">{item.description}</td>
+                                        <td className="py-2 text-right">{item.quantity}</td>
+                                        <td className="py-2 text-right">${item.unit_price.toLocaleString()}</td>
+                                        <td className="py-2 text-right font-bold text-emerald-400">${(item.quantity * item.unit_price).toLocaleString()}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+
+                                <div className="flex justify-end pt-3 border-t border-slate-900">
+                                  <div className="text-right">
+                                    <span className="text-[8px] text-slate-500 block uppercase">Project Scope Budget Estimate</span>
+                                    <span className="text-base font-extrabold font-mono text-emerald-400">${prop.totalAmount.toLocaleString()}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Negotiation Comments Thread */}
+                            <div className="bg-slate-900/10 p-5 rounded-2xl border border-slate-900 space-y-4">
+                              <h4 className="text-xs font-bold text-slate-300 uppercase font-mono tracking-wider">
+                                💬 Scope Negotiation & Collaboration Thread
+                              </h4>
+
+                              <div className="space-y-3">
+                                {prop.comments.map((comm: any) => (
+                                  <div key={comm.id} className="p-3 bg-slate-950 rounded-xl border border-slate-900 text-xs space-y-1">
+                                    <div className="flex justify-between items-center text-[10px]">
+                                      <span className="font-bold text-indigo-400 font-mono">{comm.user}</span>
+                                      <span className="text-slate-500 text-[9px]">{comm.date}</span>
+                                    </div>
+                                    <p className="text-slate-300 leading-relaxed">{comm.text}</p>
+                                  </div>
+                                ))}
+                                {prop.comments.length === 0 && (
+                                  <p className="text-[10px] text-slate-600 italic">No feedback messages logs created. Post comments below to request revisions.</p>
+                                )}
+                              </div>
+
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={commentsInput}
+                                  onChange={(e) => setCommentsInput(e.target.value)}
+                                  placeholder="Type feedback, budget requests, or clause adjustments..."
+                                  className="flex-1 bg-slate-950 border border-slate-800 rounded p-2 text-xs text-white"
+                                />
+                                <button
+                                  onClick={() => {
+                                    if (!commentsInput.trim()) return;
+                                    const newComm = {
+                                      id: "C" + Date.now(),
+                                      user: "Alice Wanjiru (Client)",
+                                      text: commentsInput,
+                                      date: "Just now"
+                                    };
+                                    setProposals(prev => prev.map(p => {
+                                      if (p.id === prop.id) {
+                                        return {
+                                          ...p,
+                                          status: "negotiating",
+                                          comments: [...p.comments, newComm]
+                                        };
+                                      }
+                                      return p;
+                                    }));
+                                    setCommentsInput("");
+                                    triggerEventLog("crm.proposal.negotiating", `${prop.title} Clause Review`);
+                                    alert("✓ Discussion log committed. Proposal moved to 'negotiating' status.");
+                                  }}
+                                  className="px-4 py-2 bg-slate-800 hover:bg-slate-750 border border-slate-700 text-xs font-bold text-white rounded font-mono uppercase"
+                                >
+                                  Comment
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Signature Sidebar Column */}
+                          <div className="space-y-6">
+                            
+                            {/* Electronic Signature Box */}
+                            <div className="bg-slate-950 p-5 rounded-2xl border border-slate-900 space-y-4">
+                              <h4 className="text-xs font-bold text-white uppercase font-mono tracking-wider">
+                                🖋️ Legally Binding E-Signature
+                              </h4>
+
+                              {prop.status === "signed" || prop.status === "converted" ? (
+                                <div className="p-4 bg-emerald-950/20 border border-emerald-900 rounded-xl text-center space-y-3">
+                                  <div className="text-emerald-400 font-extrabold text-2xl animate-pulse">✓ CONTRACT SIGNED</div>
+                                  <div className="text-[10px] text-slate-400 leading-relaxed font-mono text-left">
+                                    Signed by: <span className="text-indigo-400 font-bold">{prop.signature?.signer}</span><br />
+                                    Timestamp: {prop.signature?.timestamp}<br />
+                                    IP Code: {prop.signature?.ip}<br />
+                                    Format: {prop.signature?.format.toUpperCase()}
+                                  </div>
+                                  <div className="p-2 bg-emerald-900/10 border border-emerald-900/40 rounded text-[9px] text-slate-300">
+                                    ⚙️ Automatic Project Conversion Active. Delivery pipelines triggered!
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="space-y-4">
+                                  <div className="flex border border-slate-900 rounded p-0.5 bg-slate-950">
+                                    <button
+                                      onClick={() => setSigType("typed")}
+                                      className={`flex-1 py-1.5 rounded text-[9px] font-mono font-bold uppercase transition-all ${
+                                        sigType === "typed" ? "bg-indigo-600 text-white" : "text-slate-500"
+                                      }`}
+                                    >
+                                      Type Name
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setSigType("drawn");
+                                        setTimeout(() => {
+                                          const canvas = canvasRef.current;
+                                          if (canvas) {
+                                            const ctx = canvas.getContext("2d");
+                                            if (ctx) {
+                                              ctx.strokeStyle = '#6366f1';
+                                              ctx.lineWidth = 2.5;
+                                              ctx.lineCap = 'round';
+                                            }
+                                          }
+                                        }, 100);
+                                      }}
+                                      className={`flex-1 py-1.5 rounded text-[9px] font-mono font-bold uppercase transition-all ${
+                                        sigType === "drawn" ? "bg-indigo-600 text-white" : "text-slate-500"
+                                      }`}
+                                    >
+                                      Draw Signature
+                                    </button>
+                                  </div>
+
+                                  {sigType === "typed" ? (
+                                    <div className="space-y-2">
+                                      <label className="text-[9px] font-mono text-slate-500 uppercase block font-bold">Authorized Signatory Name</label>
+                                      <input
+                                        type="text"
+                                        value={typedName}
+                                        onChange={(e) => setTypedName(e.target.value)}
+                                        className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white font-mono"
+                                      />
+                                      <div className="p-4 bg-slate-900 rounded-lg border border-slate-850 h-20 flex items-center justify-center">
+                                        <span className="font-serif italic text-xl text-indigo-400 font-extrabold tracking-wide select-none">
+                                          {typedName || "Enter Signature Name"}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      <div className="flex justify-between items-center">
+                                        <label className="text-[9px] font-mono text-slate-500 uppercase block font-bold">Interactive Drawing Pad</label>
+                                        <button
+                                          onClick={() => {
+                                            const canvas = canvasRef.current;
+                                            if (canvas) {
+                                              const ctx = canvas.getContext("2d");
+                                              if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                            }
+                                          }}
+                                          className="text-[9px] text-indigo-400 font-mono font-bold hover:underline"
+                                        >
+                                          Clear Pad
+                                        </button>
+                                      </div>
+                                      <div className="bg-slate-900 border border-slate-850 rounded-lg h-32 overflow-hidden relative cursor-crosshair">
+                                        <canvas
+                                          ref={canvasRef}
+                                          width={300}
+                                          height={128}
+                                          onMouseDown={(e) => {
+                                            const canvas = canvasRef.current;
+                                            if (!canvas) return;
+                                            const ctx = canvas.getContext("2d");
+                                            if (!ctx) return;
+                                            setIsDrawing(true);
+                                            const rect = canvas.getBoundingClientRect();
+                                            ctx.beginPath();
+                                            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+                                          }}
+                                          onMouseMove={(e) => {
+                                            if (!isDrawing) return;
+                                            const canvas = canvasRef.current;
+                                            if (!canvas) return;
+                                            const ctx = canvas.getContext("2d");
+                                            if (!ctx) return;
+                                            const rect = canvas.getBoundingClientRect();
+                                            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+                                            ctx.stroke();
+                                          }}
+                                          onMouseUp={() => setIsDrawing(false)}
+                                          onMouseLeave={() => setIsDrawing(false)}
+                                          onTouchStart={(e) => {
+                                            const canvas = canvasRef.current;
+                                            if (!canvas) return;
+                                            const ctx = canvas.getContext("2d");
+                                            if (!ctx) return;
+                                            setIsDrawing(true);
+                                            const rect = canvas.getBoundingClientRect();
+                                            ctx.beginPath();
+                                            const t = e.touches[0];
+                                            ctx.moveTo(t.clientX - rect.left, t.clientY - rect.top);
+                                          }}
+                                          onTouchMove={(e) => {
+                                            if (!isDrawing) return;
+                                            const canvas = canvasRef.current;
+                                            if (!canvas) return;
+                                            const ctx = canvas.getContext("2d");
+                                            if (!ctx) return;
+                                            const rect = canvas.getBoundingClientRect();
+                                            const t = e.touches[0];
+                                            ctx.lineTo(t.clientX - rect.left, t.clientY - rect.top);
+                                            ctx.stroke();
+                                          }}
+                                          onTouchEnd={() => setIsDrawing(false)}
+                                          className="w-full h-full"
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  <div className="p-3 bg-slate-900 rounded text-[9px] text-slate-500 leading-relaxed border border-slate-850">
+                                    <span className="font-bold text-slate-400 uppercase block mb-1">Audit Trail Logging Info</span>
+                                    By signing, you capture electronic confirmation matching federal uniform transaction guidelines, attaching IP 197.248.88.192, timestamped at UTC.
+                                  </div>
+
+                                  <button
+                                    onClick={() => {
+                                      // Transition to Signed / Converted
+                                      setProposals(prev => prev.map(p => {
+                                        if (p.id === prop.id) {
+                                          return {
+                                            ...p,
+                                            status: "converted",
+                                            signature: {
+                                              signer: sigType === "typed" ? typedName : "Drawn Client Representative Signature",
+                                              timestamp: new Date().toUTCString(),
+                                              ip: "197.248.88.192",
+                                              format: sigType
+                                            }
+                                          };
+                                        }
+                                        return p;
+                                      }));
+                                      
+                                      // Trigger event logs for CQRS Hexagonal Outbox showcase
+                                      triggerEventLog("crm.proposal.signed", `${prop.title}`);
+                                      triggerEventLog("crm.contract.created", `Contract generated for ${prop.clientName}`);
+                                      triggerEventLog("project.created", `Project initialized: ${prop.title} ($${prop.totalAmount.toLocaleString()})`);
+
+                                      alert(`✓ Success! Proposal Signed and Approved!\n\nAutomated Project Converter has:\n1. Created Project: "${prop.title}" with budget $${prop.totalAmount.toLocaleString()}\n2. Created Milestones & Tasks\n3. Set CRM Lead to WON!\n\nCheck out the Hexagonal Event Bus log below for the strongly typed event dispatch sequences.`);
+                                    }}
+                                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-550 border border-emerald-500 text-xs font-bold text-white rounded uppercase font-mono transition-colors text-center block"
+                                  >
+                                    Certify & Electronic Sign Contract
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Revision logs */}
+                            <div className="bg-slate-950 p-5 rounded-2xl border border-slate-900 space-y-3">
+                              <h4 className="text-xs font-bold text-white uppercase font-mono tracking-wider">
+                                🔄 Version History Controls
+                              </h4>
+                              <div className="space-y-2">
+                                {prop.revisions.map((rev: any, idx: number) => (
+                                  <div key={idx} className="p-2.5 bg-slate-900/60 border border-slate-900 rounded text-[10px] font-mono flex justify-between items-center">
+                                    <div>
+                                      <div className="font-bold text-indigo-400">VERSION v{rev.version}</div>
+                                      <div className="text-slate-500 text-[9px] mt-0.5">{rev.notes}</div>
+                                    </div>
+                                    <span className="text-[8px] text-slate-600">{rev.date}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                        </div>
+                      );
+                    })()}
+
                   </div>
                 )}
 

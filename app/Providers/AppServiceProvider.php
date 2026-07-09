@@ -42,6 +42,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Repositories\NotificationRepositoryInterface::class, \App\Repositories\Eloquent\NotificationRepository::class);
         $this->app->bind(\App\Services\NotificationServiceInterface::class, \App\Services\NotificationService::class);
 
+        // Bind Bounded Context Notification Domain Repositories
+        $this->app->bind(\App\Domain\Notification\Repositories\NotificationRepositoryInterface::class, \App\Domain\Notification\Repositories\Eloquent\NotificationRepository::class);
+        $this->app->bind(\App\Domain\Notification\Repositories\NotificationPreferenceRepositoryInterface::class, \App\Domain\Notification\Repositories\Eloquent\NotificationPreferenceRepository::class);
+        $this->app->bind(\App\Domain\Notification\Repositories\NotificationTemplateRepositoryInterface::class, \App\Domain\Notification\Repositories\Eloquent\NotificationTemplateRepository::class);
+
         // Bind File Storage Repositories and Services
         $this->app->bind(\App\Repositories\FileRepositoryInterface::class, \App\Repositories\Eloquent\FileRepository::class);
         $this->app->bind(\App\Services\FileValidatorInterface::class, \App\Services\FileValidator::class);
@@ -92,6 +97,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Domain\Marketplace\Contracts\MarketplaceProductRepositoryInterface::class, \App\Domain\Marketplace\Repositories\MarketplaceProductRepository::class);
         $this->app->bind(\App\Domain\Marketplace\Contracts\MarketplaceCategoryRepositoryInterface::class, \App\Domain\Marketplace\Repositories\MarketplaceCategoryRepository::class);
 
+        // Bind Workforce Repositories
+        $this->app->bind(\App\Domain\Workforce\Repositories\WorkforceRepositoryInterface::class, \App\Domain\Workforce\Repositories\Eloquent\WorkforceRepository::class);
+
         // Bind Shared Kernel Money Value Object Formatter
         $this->app->bind(\App\Domain\Shared\Contracts\MoneyFormatter::class, \App\Domain\Shared\Services\LocaleMoneyFormatter::class);
     }
@@ -111,6 +119,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Register CRM events subscriber
         \Illuminate\Support\Facades\Event::subscribe(\App\Listeners\CrmDomainEventSubscriber::class);
+
+        // Register Bounded Context Notification events subscriber
+        \Illuminate\Support\Facades\Event::subscribe(\App\Domain\Notification\Listeners\NotificationEventSubscriber::class);
 
         // Register Model Observers
         \App\Models\StoredFile::observe(\App\Observers\StoredFileObserver::class);

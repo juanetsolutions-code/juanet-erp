@@ -1,0 +1,88 @@
+name: JUANET EOS Enterprise Continuous Integration & Deployment
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  ci-build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Set Up PHP Runtime Environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, bcmath, pdo_pgsql, pgsql, zip, redis
+          coverage: none
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer Dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install PHP Vendor Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Set Up Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Frontend Dependencies
+        run: npm ci
+
+      - name: Run TypeScript & Static Linter Checks
+        run: npm run lint
+
+      - name: Build React Production Frontend Assets
+        run: npm run build
+
+      - name: Verify Code Formatting (Laravel Pint)
+        run: ./vendor/bin/pint --test
+
+      - name: Run PHP Unit & Integration Tests Suite
+        run: php artisan test --parallel
+
+  cd-deploy-to-vps:
+    needs: ci-build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS via SSH & Run Deployment Engine
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_IP_ADDRESS }}
+          username: ${{ secrets.VPS_SSH_USER }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || 22 }}
+          script: |
+            export APP_KEY="${{ secrets.APP_KEY }}"
+            export APP_URL="${{ secrets.APP_URL }}"
+            export DB_DATABASE="${{ secrets.DB_DATABASE }}"
+            export DB_USERNAME="${{ secrets.DB_USERNAME }}"
+            export DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
+            export REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}"
+            export AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
+            export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+            export AWS_DEFAULT_REGION="${{ secrets.AWS_DEFAULT_REGION }}"
+            export AWS_BUCKET="${{ secrets.AWS_BUCKET }}"
+            export GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"
+            
+            # Navigate to directory and deploy
+            cd /var/www/juanet
+            ./deploy.sh

@@ -27,12 +27,19 @@ Route::get('/services', function () {
 
 use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\MarketplaceSearchController;
+use App\Http\Controllers\MarketplaceCartController;
+use App\Http\Controllers\WishlistController;
+use App\Http\Controllers\CompareController;
 
 Route::get('/marketplace', [MarketplaceController::class, 'index'])->name('marketplace');
 Route::get('/marketplace/search', [MarketplaceSearchController::class, 'search'])->name('marketplace.search');
 Route::get('/marketplace/category/{slug}', [MarketplaceController::class, 'categoryShow'])->name('marketplace.category');
 Route::get('/marketplace/product/{slug}', [MarketplaceController::class, 'productShow'])->name('marketplace.product');
 Route::post('/api/marketplace/track', [MarketplaceController::class, 'trackEvent'])->name('marketplace.track');
+
+Route::get('/marketplace/cart', [MarketplaceCartController::class, 'index'])->name('marketplace.cart');
+Route::get('/marketplace/wishlist', [WishlistController::class, 'index'])->name('marketplace.wishlist');
+Route::get('/marketplace/compare', [CompareController::class, 'index'])->name('marketplace.compare');
 
 Route::get('/portfolio', function () {
     return view('portfolio');
@@ -93,7 +100,7 @@ Route::middleware(['auth'])->group(function () {
     // Tenant/Organization Resolution Context Context Group
     Route::middleware(['tenant'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-        Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'webIndex'])->name('notifications.index');
+        Route::get('/notifications', [\App\Domain\Notification\Http\Controllers\NotificationController::class, 'webIndex'])->name('notifications.index');
         Route::get('/storage', [\App\Http\Controllers\FileController::class, 'webIndex'])->name('storage.index');
         Route::get('/search', [\App\Http\Controllers\SearchController::class, 'webIndex'])->name('search.index');
 
@@ -134,5 +141,24 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/crm/companies', [CrmWebController::class, 'companies'])->name('crm.companies.index');
         Route::get('/crm/opportunities', [CrmWebController::class, 'opportunities'])->name('crm.opportunities.index');
         Route::post('/crm/opportunities/move', [CrmWebController::class, 'moveOpportunity'])->name('crm.opportunities.move');
+
+        // Client Portal Routes
+        Route::get('/client/dashboard', [\App\Http\Controllers\ClientPortalController::class, 'dashboard'])->name('client.dashboard');
+        Route::get('/client/project/{project}', [\App\Http\Controllers\ProjectController::class, 'show'])->name('client.project.show');
+        Route::get('/client/project/intake', [\App\Http\Controllers\ProjectIntakeController::class, 'create'])->name('project.intake');
+        Route::post('/client/project/intake', [\App\Http\Controllers\ProjectIntakeController::class, 'store'])->name('project.intake.store');
+
+        // Proposal Builder & Management Routes
+        Route::get('/crm/proposals/create', [\App\Http\Controllers\ProposalController::class, 'create'])->name('crm.proposals.create');
+        Route::post('/crm/proposals', [\App\Http\Controllers\ProposalController::class, 'store'])->name('crm.proposals.store');
+        Route::post('/crm/proposals/{proposal}/transition', [\App\Http\Controllers\ProposalController::class, 'transition'])->name('crm.proposals.transition');
+        Route::post('/crm/proposals/{proposal}/restore/{revision}', [\App\Http\Controllers\ProposalController::class, 'restore'])->name('crm.proposals.restore');
+
+        // Client & PM Proposal Review Portal
+        Route::get('/client/proposal/{proposal}', [\App\Http\Controllers\ProposalController::class, 'show'])->name('client.proposal.show');
+        Route::get('/client/proposal/{proposal}/onboarding', [\App\Http\Controllers\ProposalController::class, 'onboarding'])->name('client.proposal.onboarding');
+        Route::post('/client/proposal/{proposal}/update', [\App\Http\Controllers\ProposalController::class, 'update'])->name('client.proposal.update');
+        Route::post('/client/proposal/{proposal}/comment', [\App\Http\Controllers\ProposalController::class, 'addComment'])->name('client.proposal.comment');
+        Route::post('/client/proposal/{proposal}/sign', [\App\Http\Controllers\ProposalController::class, 'sign'])->name('client.proposal.sign');
     });
 });

@@ -1,0 +1,230 @@
+services:
+  # Primary App Container running PHP 8.4-FPM
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: juanet-app:latest
+    container_name: juanet-production-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY}
+      APP_URL: ${APP_URL}
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      FILESYSTEM_DISK: s3
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}
+      AWS_BUCKET: ${AWS_BUCKET}
+      AWS_USE_PATH_STYLE_ENDPOINT: "true"
+      AWS_ENDPOINT: http://minio:9000
+    volumes:
+      - juanet-storage:/var/www/html/storage
+    networks:
+      - juanet-prod-network
+    depends_on:
+      - redis
+      - postgres
+      - minio
+
+  # Production High-Priority Queue Worker
+  queue-worker-high:
+    image: juanet-app:latest
+    container_name: juanet-production-worker-high
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan queue:work redis --queue=high --tries=3 --timeout=60 --sleep=3
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY}
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+    volumes:
+      - juanet-storage:/var/www/html/storage
+    networks:
+      - juanet-prod-network
+    depends_on:
+      - app
+
+  # Production Default-Priority Queue Worker
+  queue-worker-default:
+    image: juanet-app:latest
+    container_name: juanet-production-worker-default
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan queue:work redis --queue=default --tries=3 --timeout=90 --sleep=3
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY}
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+    volumes:
+      - juanet-storage:/var/www/html/storage
+    networks:
+      - juanet-prod-network
+    depends_on:
+      - app
+
+  # Cron Scheduler Daemon
+  scheduler:
+    image: juanet-app:latest
+    container_name: juanet-production-scheduler
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan schedule:work
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: ${APP_KEY}
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+    volumes:
+      - juanet-storage:/var/www/html/storage
+    networks:
+      - juanet-prod-network
+    depends_on:
+      - app
+
+  # High-Performance Production Nginx Proxying Container
+  web:
+    image: nginx:1.27-alpine
+    container_name: juanet-production-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80" # Exposed to localhost only (CloudPanel reverse proxy target)
+    volumes:
+      - juanet-storage:/var/www/html/storage
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+    networks:
+      - juanet-prod-network
+    depends_on:
+      - app
+
+  # Persistent PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: juanet-production-postgres
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432" # Securely locked to local interface for CloudPanel access
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - juanet-pgdata:/var/lib/postgresql/data
+    networks:
+      - juanet-prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Persistent Redis Database (AOF configured for crash resiliency)
+  redis:
+    image: redis:7.2-alpine
+    container_name: juanet-production-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - juanet-redis-data:/data
+    networks:
+      - juanet-prod-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Persistent S3-Compatible Storage via MinIO
+  minio:
+    image: minio/minio:RELEASE.2024-06-06T09-36-42Z
+    container_name: juanet-production-minio
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9000:9000" # API Port
+      - "127.0.0.1:9001:9001" # Admin console
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
+    volumes:
+      - juanet-miniodata:/data
+    command: minio server /data --console-address ":9001"
+    networks:
+      - juanet-prod-network
+
+  # MinIO Auto-Provisioner for Production Storage Bucket
+  minio-provisioner:
+    image: minio/mc:RELEASE.2024-06-05T20-19-48Z
+    container_name: juanet-production-minio-provisioner
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set prodminio http://minio:9000 ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY}) do echo 'Waiting for MinIO...' && sleep 1; done;
+      /usr/bin/mc mb --ignore-existing prodminio/${AWS_BUCKET};
+      /usr/bin/mc anonymous set public prodminio/${AWS_BUCKET};
+      exit 0;
+      "
+    networks:
+      - juanet-prod-network
+
+networks:
+  juanet-prod-network:
+    driver: bridge
+
+volumes:
+  juanet-storage:
+    driver: local
+  juanet-pgdata:
+    driver: local
+  juanet-redis-data:
+    driver: local
+  juanet-miniodata:
+    driver: local
