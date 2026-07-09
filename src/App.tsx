@@ -946,7 +946,7 @@ function ApiTab({ copiedText, handleCopy }: { copiedText: string | null; handleC
 
   const simulateApiCall = () => {
     setIsSimulatingApi(true);
-    setApiConsoleOutput("POST /api/payments/stk-push HTTP/1.1\nHost: api.juanet.co\nAuthorization: Bearer <token>\nContent-Type: application/json\n\nRequest processing...");
+    setApiConsoleOutput("POST /api/payments/stk-push HTTP/1.1\nHost: api.juanet.cloud\nAuthorization: Bearer <token>\nContent-Type: application/json\n\nRequest processing...");
     
     setTimeout(() => {
       setApiConsoleOutput(`HTTP/1.1 200 OK\nContent-Type: application/json\nDate: ${new Date().toUTCString()}\n\n${selectedEndpoint.responseBody}`);
@@ -6608,7 +6608,7 @@ function CrmActivitiesTab() {
 function DeploymentTab() {
   const [appName, setAppName] = useState("JUANET Enterprise Services");
   const [currency, setCurrency] = useState("KES");
-  const [supportEmail, setSupportEmail] = useState("support@juanet.co");
+  const [supportEmail, setSupportEmail] = useState("support@juanet.cloud");
 
   const [mpesaKey, setMpesaKey] = useState("DARAJA_CONSUMER_KEY_SECURE_HASH");
   const [mpesaSecret, setMpesaSecret] = useState("DARAJA_SECRET_KEY_SECURE_HASH");
@@ -6616,7 +6616,7 @@ function DeploymentTab() {
 
   const [smtpHost, setSmtpHost] = useState("smtp.mailgun.org");
   const [smtpPort, setSmtpPort] = useState("587");
-  const [smtpUser, setSmtpUser] = useState("postmaster@juanet.co");
+  const [smtpUser, setSmtpUser] = useState("postmaster@juanet.cloud");
 
   const [activeConfigTab, setActiveConfigTab] = useState("general");
 
@@ -7107,7 +7107,10 @@ function SpecsExplorerTab() {
         const data = await res.json();
         if (data.files) {
           setDocsList(data.files);
-          const master = data.files.find((f: any) => f.path === "JUANET_Master_Specification.md");
+          const master = data.files.find((f: any) => 
+            f.path === "docs/architecture/JUANET_Master_Specification.md" || 
+            f.path === "JUANET_Master_Specification.md"
+          );
           if (master) {
             setSelectedDoc(master);
           } else if (data.files.length > 0) {

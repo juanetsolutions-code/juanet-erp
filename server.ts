@@ -379,18 +379,9 @@ app.post("/api/copilot", async (req, res) => {
 // Documents / Specification files API
 app.get("/api/docs", (req, res) => {
   try {
-    const docsDir = path.join(process.cwd(), "docs", "database");
-    const masterSpecPath = path.join(process.cwd(), "JUANET_Master_Specification.md");
+    const docsDir = path.join(process.cwd(), "docs");
     
     const filesList: { name: string; path: string; category: string }[] = [];
-    
-    if (fs.existsSync(masterSpecPath)) {
-      filesList.push({
-        name: "JUANET Master Specification",
-        path: "JUANET_Master_Specification.md",
-        category: "00 Master Specs"
-      });
-    }
     
     // Recursive directory reader
     function scanDirRecursive(currentPath: string, relativeSubPath = "") {
@@ -408,13 +399,20 @@ app.get("/api/docs", (req, res) => {
           scanDirRecursive(fullEntryPath, relativeEntryPath);
         } else if (entry.isFile() && entry.name.endsWith(".md")) {
           // Determine Category based on relative sub path
-          let category = "01 General Database & Ledger Architecture";
+          let category = "General Documents";
           if (relativeSubPath) {
             // Replace underscores with spaces and capitalize logically
             const formattedSub = relativeSubPath
               .split("/")
               .map(part => {
-                return part.replace(/_/g, " ");
+                const words = part.replace(/_/g, " ").split(" ");
+                return words
+                  .map(w => {
+                    if (!w) return "";
+                    // Keep numbering format like "01", "02" as is, capitalize words
+                    return w.charAt(0).toUpperCase() + w.slice(1);
+                  })
+                  .join(" ");
               })
               .join(" / ");
             category = formattedSub;
@@ -424,7 +422,7 @@ app.get("/api/docs", (req, res) => {
           
           filesList.push({
             name: cleanName,
-            path: `docs/database/${relativeEntryPath}`,
+            path: `docs/${relativeEntryPath}`,
             category: category
           });
         }

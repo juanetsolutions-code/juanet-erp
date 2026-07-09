@@ -187,7 +187,7 @@ class FinanceService
             'estimate_id' => $data['estimate_id'] ?? null,
             'project_id' => $data['project_id'] ?? null,
             'recurring_invoice_id' => $data['recurring_invoice_id'] ?? null,
-            'payment_link' => $data['payment_link'] ?? 'https://juanet.co.ke/pay/invoice/' . Str::random(16),
+            'payment_link' => $data['payment_link'] ?? 'https://juanet.cloud/pay/invoice/' . Str::random(16),
         ]);
 
         if (!empty($data['items'])) {

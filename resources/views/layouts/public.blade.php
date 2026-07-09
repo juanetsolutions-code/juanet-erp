@@ -22,14 +22,14 @@
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:title" content="@yield('title', 'JUANET — The Enterprise Platform for Growing Businesses')">
     <meta property="og:description" content="@yield('meta_description', 'JUANET combines CRM, Marketplace, Projects, Finance, CMS, Support, AI, and Automation into one unified cloud platform built for modern enterprise agencies.')">
-    <meta property="og:image" content="https://juanet.co.ke/og-image.png">
+    <meta property="og:image" content="https://juanet.cloud/og-image.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="{{ url()->current() }}">
     <meta property="twitter:title" content="@yield('title', 'JUANET — The Enterprise Platform for Growing Businesses')">
     <meta property="twitter:description" content="@yield('meta_description', 'JUANET combines CRM, Marketplace, Projects, Finance, CMS, Support, AI, and Automation into one unified cloud platform built for modern enterprise agencies.')">
-    <meta property="twitter:image" content="https://juanet.co.ke/og-image.png">
+    <meta property="twitter:image" content="https://juanet.cloud/og-image.png">
 
     <!-- Canonical Tag -->
     <link rel="canonical" href="{{ url()->current() }}">
@@ -54,9 +54,9 @@
         "@context": "https://schema.org",
         "@type": "ProfessionalService",
         "name": "JUANET Solutions & Digital Agency",
-        "image": "https://juanet.co.ke/og-image.png",
-        "@id": "https://juanet.co.ke/#agency",
-        "url": "https://juanet.co.ke",
+        "image": "https://juanet.cloud/og-image.png",
+        "@id": "https://juanet.cloud/#agency",
+        "url": "https://juanet.cloud",
         "telephone": "+254700000000",
         "priceRange": "$$",
         "address": {

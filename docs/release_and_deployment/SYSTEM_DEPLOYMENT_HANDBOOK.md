@@ -50,7 +50,7 @@ This diagram visualizes how CloudPanel on the VPS hosts the network bridge and c
 |                                                                                   |
 |  +-----------------------------------------------------------------------------+  |
 |  |                            CLOUDPANEL PLATFORM                              |  |
-|  |  * Site: erp.juanet.co                                                      |  |
+|  |  * Site: juanet.cloud                                                       |  |
 |  |  * SSL: Let's Encrypt TLS 1.3 Auto-renew                                    |  |
 |  |  * Port Forwarding Proxy Pass: http://127.0.0.1:8080                        |  |
 |  +--------------------------------------┬--------------------------------------+  |
@@ -223,7 +223,7 @@ sudo systemctl start docker
 ### Step 3: Configure CloudPanel Site & Reverse Proxy
 1.  Log in to the CloudPanel admin interface (port `8443`).
 2.  Navigate to **Add Site** and choose **Reverse Proxy**.
-3.  Enter your domain name (e.g., `erp.juanet.co`).
+3.  Enter your domain name (e.g., `juanet.cloud`).
 4.  Set the **Reverse Proxy URL** target to `http://127.0.0.1:8080`.
 5.  Navigate to the site's **SSL/TLS** tab and click **New Let's Encrypt Certificate** to generate a certificate.
 

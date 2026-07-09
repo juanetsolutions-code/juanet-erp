@@ -244,7 +244,7 @@
                         <span class="h-3 w-3 rounded-full bg-yellow-400"></span>
                         <span class="h-3 w-3 rounded-full bg-emerald-400"></span>
                     </span>
-                    <span class="text-xs text-slate-400 font-mono dark:text-slate-500">console.juanet.co.ke/home</span>
+                    <span class="text-xs text-slate-400 font-mono dark:text-slate-500">console.juanet.cloud/home</span>
                 </div>
 
                 <!-- Tabs navigation inside console layout -->

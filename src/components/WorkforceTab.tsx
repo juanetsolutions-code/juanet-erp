@@ -91,7 +91,7 @@ export default function WorkforceTab() {
       primarySkills: ["Laravel", "PHP 8.4", "PostgreSQL", "DDD"],
       secondarySkills: ["React", "TypeScript", "Docker"],
       certifications: ["AWS Solutions Architect", "Laravel Certified Expert"],
-      email: "juan@juanet.co.ke"
+      email: "juan@juanet.cloud"
     },
     {
       id: "EMP-002",
@@ -105,7 +105,7 @@ export default function WorkforceTab() {
       primarySkills: ["Figma", "Design Systems", "Prototyping"],
       secondarySkills: ["React", "Tailwind CSS", "CSS Modules"],
       certifications: ["NN/g UX Master Certified"],
-      email: "amara@juanet.co.ke"
+      email: "amara@juanet.cloud"
     },
     {
       id: "EMP-003",
@@ -119,7 +119,7 @@ export default function WorkforceTab() {
       primarySkills: ["Cypress", "PHPUnit", "CI/CD Automations"],
       secondarySkills: ["Docker", "Selenium", "API Testing"],
       certifications: ["ISTQB Advanced Technical Test Analyst"],
-      email: "brian@juanet.co.ke"
+      email: "brian@juanet.cloud"
     },
     {
       id: "EMP-004",
@@ -133,7 +133,7 @@ export default function WorkforceTab() {
       primarySkills: ["Agile Methodologies", "Risk Management", "Jira"],
       secondarySkills: ["Product Roadmap", "Stakeholder Comm"],
       certifications: ["PMP", "Scrum Alliance CSM"],
-      email: "catherine@juanet.co.ke"
+      email: "catherine@juanet.cloud"
     },
     {
       id: "EMP-005",
@@ -147,7 +147,7 @@ export default function WorkforceTab() {
       primarySkills: ["Kubernetes", "AWS Cloud", "Terraform", "Nginx"],
       secondarySkills: ["CI/CD Automations", "Bash Shell", "Python"],
       certifications: ["AWS Certified DevOps Engineer Pro", "CKA"],
-      email: "david@juanet.co.ke"
+      email: "david@juanet.cloud"
     }
   ]);
 

@@ -53,18 +53,18 @@ JUANET is designed as a modular, federated, and highly integrated enterprise ope
                                          v
 +----------------------------------------------------------------------------------+
 |                                  BACKEND LAYER                                   |
-|  - Node.js & Express (TypeScript Server)                                         |
-|  - RESTful APIs / Server-Sent Events (SSE) / WebSockets                          |
+|  - PHP 8.4+ / Laravel 12 (Framework Core)                                        |
+|  - RESTful APIs / Server-Sent Events (SSE) / WebSockets / Queues                 |
 +----------------------------------------------------------------------------------+
                                          |
                                          v
 +----------------------------------------------------------------------------------+
 |                              INFRASTRUCTURE LAYER                                |
-|  - Supabase Auth, Row-Level Security (RLS) & Storage                             |
-|  - PostgreSQL Database (via Supabase or local Docker instance)                   |
+|  - Laravel Sanctum / Supabase Auth & RLS Core Policies                           |
+|  - PostgreSQL Database (via local Docker instance or Supabase Cloud)             |
 |  - Daraja M-PESA Gateway Integration (Digital Payment Receipts)                  |
 |  - Google Gemini API SDK (@google/genai)                                         |
-|  - CloudPanel VPS / Docker Orchestration / Nginx Proxy                           |
+|  - CloudPanel VPS / Docker Orchestration / Nginx Reverse Proxy                   |
 +----------------------------------------------------------------------------------+
 ```
 
@@ -76,13 +76,13 @@ JUANET is designed as a modular, federated, and highly integrated enterprise ope
 * **Data Visualization**: `recharts` for complex bento-grid analytics panels; `d3` for high-fidelity custom SVG layout graphs (such as ERD nodes).
 
 ### Backend
-* **Core Runtime**: Node.js (v20+) running TypeScript natively via `tsx` compiler in dev mode and esbuild bundle processing in production.
-* **Web Framework**: Express v4/v5 supporting structural router mapping, security middlewares, cors filters, and error-handling interceptors.
+* **Core Runtime**: PHP 8.4+ providing strict typing, constructor property promotion, readonly properties, and native enums.
+* **Web Framework**: Laravel 12 framework handling secure request validation, Eloquent ORM mapping, background job queues, mail dispatch, and transactional routing.
 
 ### Database & Security
-* **Database Engine**: PostgreSQL (v15+) optimized for relational consistency, rich jsonb indexing, and native row-level security policies.
-* **ORM & Querying**: Drizzle ORM providing strict TypeScript-type schema mappings.
-* **Authentication**: Supabase Auth managing user identities, secure invitation links, and multi-factor mechanisms.
+* **Database Engine**: PostgreSQL (v15+) optimized for relational consistency, JSONB querying, transactional rollback, and tenant isolation scopes.
+* **ORM & Querying**: Eloquent ORM featuring unified global scopes for multi-tenant isolation, polymorphic ledger records, and transactional outbox event tracking.
+* **Authentication**: Laravel Sanctum combined with Supabase Auth for JWT security, token tracking, invitation flows, and role-based policies.
 
 ---
 
@@ -98,15 +98,15 @@ JUANET is designed as a modular, federated, and highly integrated enterprise ope
 * **Decision**: Adopt Supabase (PostgreSQL with Row-Level Security) instead of Firebase.
 * **Reasoning**: Firebase is non-relational (NoSQL), making double-entry bookkeeping ledgers and complex financial ledger calculations extremely difficult to model and maintain cleanly. PostgreSQL provides transaction isolation (ACID), strong relational typing, native schema verification, and Supabase Auth binds seamlessly with Row-Level Security (RLS) at the database layer.
 
-### ADR 003: Express vs. NestJS for API Services
-* **Context**: Selecting the core routing and API framework for our backend Node.js microservices.
-* **Decision**: Standardize on Express instead of NestJS.
-* **Reasoning**: While NestJS is highly structured, it brings considerable boilerplate, a steep learning curve, and slow initialization. Express is lightweight, easy to run in stateless microservice containers, has minimal cold start times, and lets us write highly custom, fast routing endpoints tailored for Safaricom Daraja Webhooks and real-time Server-Sent Events (SSE).
+### ADR 003: Laravel 12 vs. Express (Node.js) for Enterprise Bounded Contexts
+* **Context**: Selecting the core routing, API, and domain logic framework for our central transactional services.
+* **Decision**: Standardize on Laravel 12 (PHP 8.4) instead of Express/Node.js.
+* **Reasoning**: Enterprise CRM and finance ledger platforms require high-security validation, strict transactional boundaries, queuing pipelines, structured email delivery, and standardized database migrations. Laravel provides a robust, standardized environment with built-in artisan utilities, powerful queue workers, secure Eloquent database scopes, and native PSR integration, eliminating the excessive fragmentation and security risks inherent to lightweight Node.js/Express libraries.
 
-### ADR 004: Turborepo for Monorepo Orchestration
-* **Context**: Managing multiple packages, microservices, and client applications in a single project.
-* **Decision**: Adopt Turborepo (`turbo.json`) to govern the monorepo workspace.
-* **Reasoning**: Turborepo detects build targets, optimizes local linting/testing pipelines, implements caching of unmodified modules, and simplifies dependency sharing across frontend and backend directories.
+### ADR 004: Bounded Contexts & DDD Directory Mapping
+* **Context**: Structuring backend directories to handle growing enterprise capabilities without cluttering.
+* **Decision**: Adopt Domain-Driven Design (DDD) to isolate domain operations into self-contained Bounded Contexts located inside `app/Domain/`.
+* **Reasoning**: Standard MVC layouts split logical components across directories, making large business processes difficult to audit. Moving leads, contracts, ledger postings, and support rules into co-located Bounded Contexts ensures high modularity, simplified testing, and straightforward maintainability as functional requirements scale.
 
 ### ADR 005: PostgreSQL as the Primary Database Engine
 * **Context**: Selecting the storage engine.
@@ -120,27 +120,33 @@ JUANET is designed as a modular, federated, and highly integrated enterprise ope
 
 ---
 
-## 5. Monorepo Architecture
+## 5. Unified Monorepo Layout & Integration
 
-The platform uses a monorepo workspace to manage applications, shared services, and internal packages.
+The platform combines the high-fidelity presentation layer and the robust Laravel 12 backend into a unified multi-framework repository, integrated using Vite asset processing.
 
 ```
-/JUANET-EOS (Monorepo Root)
-├── apps/
-│   ├── marketing-site/       # Next.js 14 Public CMS Portal & Sales Funnel
-│   ├── client-dashboard/     # React Client Workspace Portal
-│   ├── admin-dashboard/      # React Agency Command Center (RBAC Portal)
-│   └── api/                  # Express Core Server Gateway
-├── services/
-│   ├── ai-service/           # Independent microservice for Gemini Prompt Routing
-│   ├── notification-service/ # Queue processor dispatching Email, SMS, & Push Alerts
-│   ├── billing-service/      # Double-entry ledger controller & MPESA listener
-│   ├── storage-service/      # Virus scanner and secure CDN asset link signing
-│   └── workflow-service/     # Event scheduler & visual action engine
-└── packages/
-    ├── ui/                   # Shared Tailwind components & custom theme tokens
-    ├── utils/                # SHA256 checksums, MPESA helpers & formatters
-    └── types/                # Shared TS Interfaces & database schema interfaces
+/JUANET-EOS (Unified Repository Root)
+├── app/                      # Laravel 12 Backend Application Root
+│   ├── Domain/               # Bounded Contexts (Core Business Domains)
+│   │   ├── CRM/              # Lead Funnels & Pipeline Controllers
+│   │   ├── Contract/         # Electronic Signatures, Proposals, NDA PDF Engines
+│   │   ├── Finance/          # Immutable Double-entry Ledger & Invoice Systems
+│   │   ├── Marketplace/      # Digital Store Asset Management & Store Modules
+│   │   └── Notification/     # Multi-channel Dispatch and Event Routing Engines
+│   ├── Http/                 # Controller, Middleware, and Request Filters
+│   ├── Models/               # Core Eloquent Models
+│   └── Providers/            # Service Providers (Gateway Registries, Event Registers)
+├── bootstrap/                # Laravel Application Bootstrap Code
+├── config/                   # Configuration Files (database, mail, queues, sanctum)
+├── database/                 # Migrations, Seeders, and Model Factories
+├── resources/                # Public Blade Views & Asset entry files
+├── routes/                   # API, Web, and Console Route Mappings
+├── src/                      # Vite & React 18 SPA Frontend Source
+│   ├── components/           # Extracted UI components (Workforce, Finance, CRM)
+│   ├── lib/                  # Frontend initialized SDKs
+│   └── App.tsx               # Primary Client/Admin SPA Dashboard Code
+├── tests/                    # Automated PHPUnit, Pest, and Integration Test Suite
+└── package.json              # Front-end Asset Bundling and Dev Scripts
 ```
 
 ---
@@ -327,7 +333,7 @@ JUANET operates under a strict Role-Based Access Control (RBAC) model combined w
                                           v
 +-----------------------------------------------------------------------------------+
 |                                 APPLICATION LAYER                                 |
-|                       Express Routing Controllers & Middlewares                   |
+|                       Laravel Routing Controllers & Middlewares                   |
 +-----------------------------------------------------------------------------------+
                                           |
                                           v
@@ -380,7 +386,7 @@ All async operations on JUANET are governed by real-time events.
 
 ## 15. File Storage Standards
 
-JUANET uses Supabase Storage buckets protecting assets under strict RLS boundaries.
+JUANET uses secure cloud storage disks (S3, MinIO, or local) managed through Laravel's native Storage system, protecting assets under strict access control boundaries.
 
 ### Storage Buckets List
 1. `contracts`: Holds client NDAs, signed proposals, and scope documents.
@@ -409,13 +415,13 @@ JUANET uses Supabase Storage buckets protecting assets under strict RLS boundari
 
 ### Server Environment (VPS + CloudPanel)
 * **Web Server**: Nginx acts as the front-end reverse proxy, handling SSL validation and request routing.
-* **Process Manager**: PM2 or Docker Compose manages runtime clustering for Express API services.
+* **Process Manager**: PHP-FPM, Laravel Queue Workers, and Docker Compose manage runtime execution and background jobs for Laravel Core services.
 * **Reverse Proxy Configuration**:
-  * External port `443` routes directly to internal target port `3000` for primary API operations.
+  * External port `443` routes directly to internal target port `80` or containerized service ports for primary API operations.
   * Static compiled assets are cached directly at the proxy layer using long-term expiration headers.
 
 ### High Availability Scaling Strategy
-* **Core Application Scaling**: Deploy stateless Node.js containers behind a load balancer.
+* **Core Application Scaling**: Deploy stateless Laravel containers behind an Nginx load balancer.
 * **Database Scaling**: Read replication clusters separating analytics queries from live payment processing pipelines.
 
 ---
@@ -549,9 +555,9 @@ PUSHER_CLUSTER=ap2
 # ==========================================
 SMTP_HOST=smtp.mailgun.org
 SMTP_PORT=587
-SMTP_USER=postmaster@mg.juanet.co
+SMTP_USER=postmaster@mg.juanet.cloud
 SMTP_PASSWORD=mailgun_secret_pass
-SMTP_SENDER_EMAIL=billing@juanet.co
+SMTP_SENDER_EMAIL=billing@juanet.cloud
 ```
 
 ---
@@ -587,9 +593,9 @@ Do NOT generate SQL.
 |                                  TEST SUITE                                       |
 +-----------------------------------------------------------------------------------+
          │
-         ├───> [ Unit Testing ]         # Verify utility helpers (MPESA checksums)
-         ├───> [ Integration Testing ]  # Validate double-entry ledger database states
-         └───> [ End-to-End (E2E) ]     # Automated client flows (checkout to download)
+         ├───> [ Unit Testing ]         # Verify utility helpers (MPESA checksums) via PHPUnit/Pest
+         ├───> [ Integration Testing ]  # Validate double-entry ledger database states using Laravel RefreshDatabase
+         └───> [ End-to-End (E2E) ]     # Automated client flows (checkout to download) via Playwright / Cypress
 ```
 
 ---
@@ -620,13 +626,13 @@ Phase 1: Architecture Hub & Master Specification (COMPLETED)
 Phase 2: PostgreSQL Schema Layout, Indexes & RLS Configurations (NEXT)
    │
    v
-Phase 3: Custom Express API Gateway & Microservice Codebases
+Phase 3: Custom Laravel 12 API Architecture & Domain Bounded Contexts
    │
    v
 Phase 4: Client and Admin Dashboard React Build
    │
    v
-Phase 5: CloudPanel Host Setup & PM2 Service Scaling
+Phase 5: CloudPanel Host Setup, Laravel Queue Workers & Redis Optimization
    │
    v
 Phase 6: Native iOS & Android Workspace Portals (React Native)

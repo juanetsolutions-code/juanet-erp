@@ -189,7 +189,7 @@ export default function FinanceTab() {
       estimate_id: "EST-2026-001",
       project_id: null,
       recurring_invoice_id: null,
-      payment_link: "https://juanet.co.ke/pay/invoice/INV-2026-0001",
+      payment_link: "https://juanet.cloud/pay/invoice/INV-2026-0001",
       items: [
         {
           id: "item-1",
@@ -220,7 +220,7 @@ export default function FinanceTab() {
       estimate_id: null,
       project_id: "101",
       recurring_invoice_id: null,
-      payment_link: "https://juanet.co.ke/pay/invoice/INV-2026-0002",
+      payment_link: "https://juanet.cloud/pay/invoice/INV-2026-0002",
       items: [
         {
           id: "item-2",
@@ -251,7 +251,7 @@ export default function FinanceTab() {
       estimate_id: null,
       project_id: null,
       recurring_invoice_id: null,
-      payment_link: "https://juanet.co.ke/pay/invoice/INV-2026-0003",
+      payment_link: "https://juanet.cloud/pay/invoice/INV-2026-0003",
       items: [
         {
           id: "item-3",
@@ -561,7 +561,7 @@ export default function FinanceTab() {
       estimate_id: null,
       project_id: null,
       recurring_invoice_id: null,
-      payment_link: `https://juanet.co.ke/pay/invoice/${invoiceNum}`,
+      payment_link: `https://juanet.cloud/pay/invoice/${invoiceNum}`,
       items: [invoiceItem]
     };
 
@@ -657,7 +657,7 @@ export default function FinanceTab() {
       estimate_id: estimate.id,
       project_id: null,
       recurring_invoice_id: null,
-      payment_link: `https://juanet.co.ke/pay/invoice/${invoiceNum}`,
+      payment_link: `https://juanet.cloud/pay/invoice/${invoiceNum}`,
       items: invoiceItems
     };
 
@@ -770,7 +770,7 @@ export default function FinanceTab() {
         estimate_id: null,
         project_id: null,
         recurring_invoice_id: template.id,
-        payment_link: `https://juanet.co.ke/pay/invoice/${invoiceNum}`,
+        payment_link: `https://juanet.cloud/pay/invoice/${invoiceNum}`,
         items: invoiceItems
       };
 
@@ -819,7 +819,7 @@ export default function FinanceTab() {
       estimate_id: null,
       project_id: "102", // simulated project ID
       recurring_invoice_id: null,
-      payment_link: `https://juanet.co.ke/pay/invoice/${invoiceNum}`,
+      payment_link: `https://juanet.cloud/pay/invoice/${invoiceNum}`,
       items: [
         {
           id: `item-${Date.now()}`,
@@ -876,7 +876,7 @@ export default function FinanceTab() {
       estimate_id: null,
       project_id: null,
       recurring_invoice_id: null,
-      payment_link: `https://juanet.co.ke/pay/invoice/${invoiceNum}`,
+      payment_link: `https://juanet.cloud/pay/invoice/${invoiceNum}`,
       items: [
         {
           id: `item-${Date.now()}`,
@@ -934,7 +934,7 @@ export default function FinanceTab() {
       estimate_id: null,
       project_id: null,
       recurring_invoice_id: null,
-      payment_link: `https://juanet.co.ke/pay/invoice/${invoiceNum}`,
+      payment_link: `https://juanet.cloud/pay/invoice/${invoiceNum}`,
       items: [
         {
           id: `item-${Date.now()}`,
